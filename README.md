@@ -1,6 +1,17 @@
 # quibble-backend
 Backend application for Quibble
 
+Since GitHub won't let us hard-code API keys in code (probably best), there are a few steps needed to pass the API key via an environmental variable:
+1. Navigate to the project directory
+2. Create a virtual environment:
+    $ python -m venv venv
+    $ . venv/bin/activate
+3. Install requirements (just OpenAI right now):
+    $ pip install -r requirements.txt
+4. Add API key to your environment:
+    $ OPENAI_API_KEY=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
+5. You should be able to run either of my test programs now, using my project key.
+
 Responsibilies of the backend: 
 - Accepting the (validated by the front end) URLs of the Products that the user wishes to compare
 - Making callouts to those URLs to obtain product description information about them from their web pages.  To do this, some “scraping” logic is going to be implemented to extract the “description” or other meaningful information about the product from the product page to pass to OpenAI’s API, as opposed to passing the entire HTML contents of the product web pages, which would be inefficient and potentially overwhelm the API with too much irrelevant information

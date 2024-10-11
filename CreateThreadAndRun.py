@@ -6,10 +6,7 @@ import time
 Accepts no parameters, initializes OpenAI with the key stored in the environment variable OPENAI_API_K
 '''
 def initialize_openai_with_key(api_key):
-    # eventually, should replace this with use of environment variable, 
-    #  per OpenAI best practices, so we're not sharing a key 
-    #  something like api_key=os.environ.get("OPENAI_API_KEY")
-    #  - unless we're OK with sharing our key with end users of our app? 
+    # best practice is to use environment variable (and GitHub won't let us share keys), but that is done in the calling method for now
     client = OpenAI(api_key = api_key)    
     return client
 
@@ -86,8 +83,8 @@ def get_response_from_messages(messages):
 
 def main():
     
-    proj_api_key = "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"
-    client = initialize_openai_with_key(proj_api_key)
+    #"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"
+    client = initialize_openai_with_key(os.environ.get("OPENAI_API_KEY"))
                                
     # create assistant - can pass specific model if we want
     assistant = create_assistant(client)

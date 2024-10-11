@@ -2,11 +2,17 @@ import os
 from openai import OpenAI
 
 '''
-Accepts no parameters, initializes OpenAI with the key stored in the environment variable
+Accepts optional API key parameter, 
+initializes OpenAI with either the provided key or key stored in the environment variable.
 '''
-def initialize_openai_with_key():
-    # best practice is to use environment variable (and GitHub won't let us share keys)
-    client = OpenAI()  # should not need to pass by assigning os.environ.get("OPENAI_API_KEY") to api_key
+def initialize_openai_with_key(hard_coded_key = None):
+    # best practice is to use environment variable, but can also pass in the key directly
+    #  Brendan note - we'll want to make a decision here - using the environment variable is more secure, but
+    #  might be difficult to facilitate if we are deploying this to the cloud
+    if hard_coded_key is not None:
+        client = OpenAI(api_key = hard_coded_key)
+    else: 
+        client = OpenAI()  # should not need to pass by assigning os.environ.get("OPENAI_API_KEY") to api_key, but that is what's happening here
     return client
 
 # simple "single call" approach from OpenAI "quick start" guide
@@ -31,7 +37,9 @@ def create_completion(client, prompt):
 
 def main():
     
-    client = initialize_openai_with_key()
+    # not secure / best practice, but for now, we'll hard-code the key for easy testing
+    brendan_project_key = "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"
+    client = initialize_openai_with_key(brendan_project_key)
                                
     # get user input
     prompt = input("Enter a prompt: ")

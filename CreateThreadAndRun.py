@@ -1,19 +1,14 @@
 import os
 from openai import OpenAI
 import time
+from dotenv import load_dotenv
 
 '''
-Accepts optional API key parameter, 
-initializes OpenAI with either the provided key or key stored in the environment variable.
+Initializes OpenAI key stored in the environment variable.
 '''
-def initialize_openai_with_key(hard_coded_key = None):
-    # best practice is to use environment variable, but can also pass in the key directly
-    #  Brendan note - we'll want to make a decision here - using the environment variable is more secure, but
-    #  might be difficult to facilitate if we are deploying this to the cloud
-    if hard_coded_key is not None:
-        client = OpenAI(api_key = hard_coded_key)
-    else: 
-        client = OpenAI()  # should not need to pass by assigning os.environ.get("OPENAI_API_KEY") to api_key, but that is what's happening here
+def initialize_openai_with_key():
+    # best practice is to use environment variable, instead of passing key directly
+    client = OpenAI()  # should not need to pass by assigning os.environ.get("OPENAI_API_KEY") to api_key, but that is what's happening here
     return client
 
 
@@ -90,9 +85,8 @@ def get_response_from_messages(messages):
 
 def main():
     
-    # not secure / best practice, but for now, we'll hard-code the key for easy testing
-    brendan_project_key = "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"
-    client = initialize_openai_with_key(brendan_project_key)
+    # instead of passing hard-coded key, use environment variable
+    client = initialize_openai_with_key()
                                
     # create assistant - can pass specific model if we want
     assistant = create_assistant(client)
@@ -125,5 +119,6 @@ def main():
     print(response)
 
 if __name__ == "__main__":
+    load_dotenv()  # Load the .env file, which should contain our OpenAI key
     main()
     

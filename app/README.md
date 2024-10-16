@@ -12,7 +12,9 @@ git clone <repository_url>
 2. Create and activate a virtual environment: 
 ```
 python3 -m venv venv
-source venv/bin/activate  # On Windows use venv\Scripts\activate
+
+source venv/bin/activate  # Use this if you have Mac/Linux
+.\venv\Scripts\activate    # Use this if you have Windows
 ```
 3. Install required dependencies:
 ```
@@ -30,3 +32,6 @@ uvicorn app.main:app --reload
 ```
 6. Access Swagger for testing:
 - Navigate to http://127.0.0.1:8000/docs in your browser to access the Swagger UI and test the /compare API route.
+
+## Team collobration 
+In services folder, scraper.py and openai_service.py can be modified and extended based on your development needs. Please feel free to delete any unnecessary functions. 

@@ -1,23 +1,37 @@
 # quibble-backend
 Backend application for Quibble
 
-To run either of the test programs I've built so far, simply run the python program, for example:
-    $ python3 CreateCompletionFromPrompt.py
+## Project Overview
+This project is a web-based application designed to compare products from different websites. It accepts two URLs, processes their content, and uses AI to generate a detailed comparison between the products. For now, the OpenAI logic is under construction, and the scraping logic is being developed.
 
-You'll then be prompted to give an input (ask a question, give a prompt, whatever!) and the assistants I've set up in the program will respond.  
-Since the "CreateThreadAndRun.py" program creates an asynchronous thread, it will take a little longer than the other program, but I suspect that we may end up needing to use threads given the size of the prompts we'll be creating later on.
+## Installation
+1. Clone the repository: 
+```
+git clone <repository_url>
+```
+2. Create and activate a virtual environment: 
+```
+python3 -m venv .venv
 
-There are 2 ways to pass the API key for the project in - as a hard-coded variable, or as an environmental variable.  Using a hard-coded variable is less secure and not recommended, plus OpenAI is smart enough to invalidate tokens that are pushed to a GitHub branch.
+source .venv/bin/activate  # Use this if you have Mac/Linux
+.\venv\Scripts\activate    # Use this if you have Windows
+```
+3. Install required dependencies:
+```
+pip install -r requirements.txt
+```
+4. Set up environment variables:
+- Create a .env file in the root of your project with the following variables:
+```
+OPENAI_API_KEY=your_openai_api_key
+FRONTEND_URL=http://localhost:3000
+```
+5. Run the application:
+```
+uvicorn app.main:app --reload
+```
+6. Access Swagger for testing:
+- Navigate to http://127.0.0.1:8000/docs in your browser to access the Swagger UI and test the /compare API route.
 
-To use the environmental variable approach to authentication, there are a few steps needed to pass the API key via an environmental variable:
-1. Navigate to the project directory
-2. Create a virtual environment (Mac instructions here):
-    $ python3 -m venv venv
-    $ . venv/bin/activate
-3. Install requirements (just OpenAI right now):
-    $ pip install -r requirements.txt
-4. Create a Project API key (https://platform.openai.com/api-keys) if you don't have a valid one already.
-5. Add API key to your environment:
-    $ OPENAI_API_KEY=yourkeyvalue (replace that with your actual key)
-6. Optionally, you can create a ".env" file in your local project directory and save your key there.  The ".gitignore" file will ignore your ".env" file so that your key is not committed to the repo.
-7. You should be able to run either of the test programs now, using your project key.
+## Team collobration 
+In services folder, scraper.py and openai_service.py can be modified and extended based on your development needs. Please feel free to delete any unnecessary functions. 

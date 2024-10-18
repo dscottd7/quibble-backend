@@ -21,12 +21,15 @@ async def compare_urls(urls: URLRequest):
         parsed_url1_html = parse_html(url1_html)
         parsed_url2_html = parse_html(url2_html)
 
-        # Placeholder response
-        return {
-            "url1_content": parsed_url1_html,
-            "url2_content": parsed_url2_html,
-            "comparison": "Comparison logic to be added"
-        }
+        # use OpenAI to compare the two products
+        # - @TODO prompt formation should be done in a separate function as we get more complex
+        prompt = f"Compare the following two products: \n\nProduct 1: \n{parsed_url1_html}\n\nProduct 2:\n{parsed_url2_html}"
+        openai_response = call_openai_api(prompt)
+        print(openai_response)
+        return openai_response
+
+
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -35,3 +35,35 @@ uvicorn app.main:app --reload
 
 ## Team collobration 
 In services folder, scraper.py and openai_service.py can be modified and extended based on your development needs. Please feel free to delete any unnecessary functions. 
+
+## Standard Git Workflow for Team Collaboration
+1. Check modified files: 
+```
+git status
+```
+2. Add and commit changes: 
+```
+git add <specific-file>
+git add .  # To add all changed files
+```
+3. Ignore runtime files:
+- Add for examle .env, venv/, __pycache__/ to .gitignore.
+- Save .gitignore
+- Remove __pycache__ from Git's tracking with: 
+```
+git rm --cached -r app/api/__pycache__/  (check the right path by "git status")
+git rm --cached -r app/models/__pycache__/
+```
+- Commit the .gitignore file changes. 
+```
+git add .gitignore
+```
+4. Commit changes:
+```
+git commit -m "Describe changes"
+```
+5. Pull and push changes to avoid conflicts:
+```
+git pull origin <branch>
+git push origin <branch-name>
+```

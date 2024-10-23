@@ -4,12 +4,19 @@ from app.services.fetch_html import fetch_html
 from app.services.parse_html import parse_html
 from app.services.openai_service import call_openai_api
 
+from app.models.scrape_request import ScrapeRequest
+from app.services.get_with_aiohttp import get_with_aiohttp
+from app.services.get_with_playwright import get_with_playwright
+from app.services.clean_html import clean_html
+
+import asyncio
+import logging
+
 # Initialize the router
 router = APIRouter()
 
 
-""" API route to handle POST request for product comparson
-    Other two routes can be integrated back to this route after successful independent testing """
+""" API route to handle POST request for product comparson """
 @router.post("/compare")
 async def compare_urls(urls: URLRequest):
     try:
@@ -28,33 +35,28 @@ async def compare_urls(urls: URLRequest):
         print(openai_response)
         return openai_response
 
-
-
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-""" Created a route to test HTML scraper func seperately.
-    This should be modified. Current function is not working """
+""" Experimental route to handle scraping for user agent blocking and JS rendering """
 @router.post("/scrape")
-async def scrape_html(urls: URLRequest):
+async def scrape_url(request: ScrapeRequest):
     try:
-        # Fetch HTML content from the provided URLs
-        url1_html = fetch_html(urls.url1)
-        url2_html = fetch_html(urls.url2)
+        # First attempt: Try with aiohttp if JavaScript isn't required
+        if not request.requires_javascript:
+            try:
+                content = await get_with_aiohttp(str(request.url))
+                return {"text": clean_html(content)}  # removed request.selector
+            except Exception as e:
+                logging.warning(f"aiohttp failed, falling back to playwright: {str(e)}")
 
-        # Parse HTML and return only the page content for both URLs
-        parsed_url1_html = parse_html(url1_html)
-        parsed_url2_html = parse_html(url2_html)
+        # Second attempt or if JavaScript is required: Use playwright
+        content = await get_with_playwright(str(request.url))
+        return {"text": clean_html(content)}  # removed request.selector
 
-        # Placeholder response
-        return {
-            "url1_content": parsed_url1_html,
-            "url2_content": parsed_url2_html,
-            "comparison": "Comparison logic to be added"
-        }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 """ Created a route to test OpenAi itegration independently. 

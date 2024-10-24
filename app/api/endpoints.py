@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from app.models.url_request import URLRequest
+from app.models.user_input import UserInput
+from app.models.selected_categories import SelectedCategories
 from app.services.fetch_html import fetch_html
 from app.services.parse_html import parse_html
+from app.services.prompt_service import create_prompt
 from app.services.openai_service import call_openai_api
-
 from app.models.scrape_request import ScrapeRequest
 from app.services.get_with_aiohttp import get_with_aiohttp
 from app.services.get_with_playwright import get_with_playwright
@@ -18,8 +20,11 @@ router = APIRouter()
 
 """ API route to handle POST request for product comparson """
 @router.post("/compare")
-async def compare_urls(urls: URLRequest):
+async def compare_urls(urls: URLRequest, user_input: UserInput):
     try:
+        # Validate selected categories
+        SelectedCategories.validate_categories(user_input.selected_categories)
+
         # Fetch HTML content from the provided URLs
         url1_html = fetch_html(urls.url1)
         url2_html = fetch_html(urls.url2)
@@ -30,10 +35,12 @@ async def compare_urls(urls: URLRequest):
 
         # use OpenAI to compare the two products
         # - @TODO prompt formation should be done in a separate function as we get more complex
-        prompt = f"Compare the following two products: \n\nProduct 1: \n{parsed_url1_html}\n\nProduct 2:\n{parsed_url2_html}"
+        # - @Create a prompt for OpenAI API using prompt_service
+        prompt = create_prompt(parsed_url1_html, parsed_url2_html, user_input.selected_categories, user_input.user_preference)
+
+        # Call OpenAI API for comparison
         openai_response = call_openai_api(prompt)
-        print(openai_response)
-        return openai_response
+        return {"comparison": openai_response}
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

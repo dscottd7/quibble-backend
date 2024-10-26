@@ -2,17 +2,11 @@ from fastapi import APIRouter, HTTPException
 from app.models.url_request import URLRequest
 from app.models.user_input import UserInput
 from app.models.selected_categories import SelectedCategories
-from app.services.fetch_html import fetch_html
-from app.services.parse_html import parse_html
 from app.services.prompt_service import create_prompt
 from app.services.openai_service import call_openai_api
 from app.models.scrape_request import ScrapeRequest
-from app.services.get_with_aiohttp import get_with_aiohttp
 from app.services.get_with_playwright import get_with_playwright
 from app.services.clean_html import clean_html
-
-import asyncio
-import logging
 
 # Initialize the router
 router = APIRouter()
@@ -25,13 +19,18 @@ async def compare_urls(urls: URLRequest, user_input: UserInput):
         # Validate selected categories
         SelectedCategories.validate_categories(user_input.selected_categories)
 
-        # Fetch HTML content from the provided URLs
-        url1_html = fetch_html(urls.url1)
-        url2_html = fetch_html(urls.url2)
+        # Scrape HTML and return only the page content for both URLs
+        try:
+            url1_html = await get_with_playwright(str(urls.url1))
+            parsed_url1_html = clean_html(url1_html)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
-        # Parse HTML and return only the page content for both URLs
-        parsed_url1_html = parse_html(url1_html)
-        parsed_url2_html = parse_html(url2_html)
+        try:
+            url2_html = await get_with_playwright(str(urls.url2))
+            parsed_url2_html = clean_html(url2_html)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
         # use OpenAI to compare the two products
         # - @TODO prompt formation should be done in a separate function as we get more complex
@@ -50,15 +49,7 @@ async def compare_urls(urls: URLRequest, user_input: UserInput):
 @router.post("/scrape")
 async def scrape_url(request: ScrapeRequest):
     try:
-        # First attempt: Try with aiohttp if JavaScript isn't required
-        if not request.requires_javascript:
-            try:
-                content = await get_with_aiohttp(str(request.url))
-                return {"text": clean_html(content)}  # removed request.selector
-            except Exception as e:
-                logging.warning(f"aiohttp failed, falling back to playwright: {str(e)}")
-
-        # Second attempt or if JavaScript is required: Use playwright
+        # Using playwright to render page and express any JavaScript
         content = await get_with_playwright(str(request.url))
         return {"text": clean_html(content)}  # removed request.selector
 

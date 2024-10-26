@@ -69,3 +69,10 @@ git commit -m "Describe changes"
 git pull origin <branch>
 git push origin <branch-name>
 ```
+
+## Sprint II Project Updates for Quibble_backend
+1. Refine LLM prompt to improve response content
+- user_input.py (Models): Defines user inputs like selected_categories and user_preference.
+- selected_categories.py (Models): Validates the categories selected by the user and provides default categories if no specific ones are selected.
+- prompt_service.py (Services): Constructs the final prompt using selected categories, user preference, and parsed product details.
+- endpoints.py (API): Integrates all logic to fetch, parse, and create a refined prompt to send to OpenAI based on user input.

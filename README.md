@@ -76,3 +76,26 @@ git push origin <branch-name>
 - selected_categories.py (Models): Validates the categories selected by the user and provides default categories if no specific ones are selected.
 - prompt_service.py (Services): Constructs the final prompt using selected categories, user preference, and parsed product details.
 - endpoints.py (API): Integrates all logic to fetch, parse, and create a refined prompt to send to OpenAI based on user input.
+
+2. Added Selenium with Chrome Webdriver 
+- Selenium’s compatibility across Windows, macOS, and Linux, combined with Chrome WebDriver, allows effective control of a headless browser to render JavaScript. This setup is suitable for both local and cloud-based environments.
+- The dependency of selenium is in requirements.txt, in your terminal, you can: 
+```
+pip install -r requirements.txt
+
+or
+
+pip install selenium
+```
+- If an error indicates that webdriver_manager is missing, run the following commend to intall it:
+```
+pip install webdriver-manager
+```
+- Run the regular commend to start the program. 
+```
+source .venv/bin/activate  # Use this if you have Mac/Linux
+.\venv\Scripts\activate    # Use this if you have Windows
+
+uvicorn app.main:app --reload # Start the server to test
+```
+- This program kept get_with_aiohttp.py and get_with_playwright.py. You can test those methods by modifying endpoints url_html. 

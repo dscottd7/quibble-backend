@@ -1,5 +1,0 @@
-runtime: python311  # using Python 3.11
-# can use default instance_class - this needs to align with the number of workers specified in the entrypoint
-entrypoint: gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app
-
-# no handlers needed for now

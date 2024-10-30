@@ -8,6 +8,8 @@ from app.models.scrape_request import ScrapeRequest
 from app.services.get_with_playwright import get_with_playwright
 from app.services.clean_html import clean_html
 
+import os
+
 # Initialize the router
 router = APIRouter()
 
@@ -60,15 +62,15 @@ async def scrape_url(request: ScrapeRequest):
 """ Created a route to test OpenAi itegration independently. 
     This should be modified. Current function is not working """
 @router.post("/openai-test")
-async def test_openai(urls: URLRequest):
+async def test_openai():
     try:
-        # Prompts
-        prompt = f"Compare the following two products: \n\nProduct 1: \n{url1_html}\n\nProduct 2:\n{url2_html}"
+        
+        # do we have an OpenAI API key?
+        if not os.getenv("OPENAI_API_KEY"):
+            raise HTTPException(status_code=400, detail="OpenAI API Key not found")
+        else:
+            return {"message": "OpenAI API Key found!"}
 
-        # Call OpenAI API to get comparison results
-        openai_response = call_openai_api(prompt)
-
-        # Return comparison response
-        return {"comparison": openai_response.get("choices")[0].get("text")}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    

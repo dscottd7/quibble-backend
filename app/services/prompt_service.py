@@ -16,6 +16,7 @@ def create_prompt(url1_html: str, url2_html: str, selected_categories: list, use
         f"Compare the following products based on the categories: {categories_text}.\n\n"
         f"Product 1: {url1_html}\n\nProduct 2: {url2_html}.\n\n"
         f"User preference: {user_preference}.\n"
-        f"Provide a recommendation based on the selected categories."
+        f"Provide a recommendation based on the selected categories.\n"
+        f"Provide a title for this set of comparison."   # Add a title for the comparison
     )
     return prompt

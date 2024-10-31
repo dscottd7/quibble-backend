@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import APIRouter, HTTPException
 from app.models.url_request import URLRequest
 from app.models.user_input import UserInput
@@ -5,7 +6,7 @@ from app.models.selected_categories import SelectedCategories
 from app.services.prompt_service import create_prompt
 from app.services.openai_service import call_openai_api
 from app.models.scrape_request import ScrapeRequest
-from app.services.get_with_playwright import get_with_playwright
+from app.services.get_with_selenium import get_with_selenium
 from app.services.clean_html import clean_html
 
 # Initialize the router
@@ -21,13 +22,13 @@ async def compare_urls(urls: URLRequest, user_input: UserInput):
 
         # Scrape HTML and return only the page content for both URLs
         try:
-            url1_html = await get_with_playwright(str(urls.url1))
+            url1_html = await asyncio.get_event_loop().run_in_executor(None, get_with_selenium, str(urls.url1))
             parsed_url1_html = clean_html(url1_html)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
         try:
-            url2_html = await get_with_playwright(str(urls.url2))
+            url2_html = await asyncio.get_event_loop().run_in_executor(None, get_with_selenium, str(urls.url2))
             parsed_url2_html = clean_html(url2_html)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -47,10 +48,10 @@ async def compare_urls(urls: URLRequest, user_input: UserInput):
 
 """ Experimental route to handle scraping for user agent blocking and JS rendering """
 @router.post("/scrape")
-async def scrape_url(request: ScrapeRequest):
+def scrape_url(request: ScrapeRequest):
     try:
         # Using playwright to render page and express any JavaScript
-        content = await get_with_playwright(str(request.url))
+        content = get_with_selenium(str(request.url))
         return {"text": clean_html(content)}  # removed request.selector
 
     except Exception as e:

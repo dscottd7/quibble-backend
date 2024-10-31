@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from app.services.openai_completion import return_completion_from_prompt
 from app.services.openai_thread import return_thread_from_prompt
+from app.services.tests.get_sample_urls_and_html import get_ebay_url_and_scraped_html, get_amazon_url_and_scraped_html
 
 
 # Function to call OpenAI API
@@ -45,4 +46,13 @@ def call_openai_api(prompt: str):
         raise HTTPException(status_code=400, detail=f"Error calling OpenAI API: {str(e)}")
     
 if __name__ == "__main__":
-    call_openai_api("hello")
+
+    # get some sample user inputs
+    # ebay product description
+    url1,url1_html = get_ebay_url_and_scraped_html()
+    # amazon product description
+    url2,url2_html = get_amazon_url_and_scraped_html()
+    
+    prompt = f"Compare the following two products: \n\nProduct 1: \n{url1_html}\n\nProduct 2:\n{url2_html}"
+
+    call_openai_api(prompt)

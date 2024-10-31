@@ -13,7 +13,8 @@ def call_openai_api(prompt: str):
     print(prompt)
 
     # check that we have an OpenAI key
-    if openai.api_key is None:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key not found")
 
     try:

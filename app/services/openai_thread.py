@@ -2,7 +2,7 @@ import os
 from openai import OpenAI
 import time
 from dotenv import load_dotenv
-from tests.get_sample_urls_and_html import get_ebay_url_and_scraped_html, get_amazon_url_and_scraped_html
+from app.services.tests.get_sample_urls_and_html import get_ebay_url_and_scraped_html, get_amazon_url_and_scraped_html
 
 
 # more steps involved in setting up threads than completion approach, but gives us more options for customization

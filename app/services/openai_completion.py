@@ -1,7 +1,7 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
-from tests.get_sample_urls_and_html import get_ebay_url_and_scraped_html, get_amazon_url_and_scraped_html
+from app.services.tests.get_sample_urls_and_html import get_ebay_url_and_scraped_html, get_amazon_url_and_scraped_html
 
 '''
 Calls other functions listed here to initialize OpenAI, create a completion, and return the completion response.

@@ -1,0 +1,15 @@
+Brendan - Oct 31
+- trying to keep some notes here on docker image deployment to google cloud run
+- things I have changed that I think are useful:
+1. The CMD in Dockerfile should be in JSON array format: CMD ["uvicorn", "main:app", "--port", "8000", "--host", "0.0.0.0"]
+2. The "--reload" flag on our uvicorn server should NOT be used for deployment (just local dev)
+3. The desired port (8000) should be "exposed" in the Dockerfile: EXPOSE 8000 
+4. ***MOST IMPORTANT - if using a Mac, when you go to create an image to deploy to Google Cloud, you must build with the "--platform linux/amd64" flag*****
+
+
+How to: build docker image, push to docker hub, deploy via Google Cloud Run UI
+1. Build image locally: docker build --platform linux/amd64 -t jbh14/quibble-backend:1.0.6 .
+- !!! --platform linux/amd64 IS CRUCIAL TO MAKE IT WORK ON GOOGLE CLOUD!!!
+2. Login to docker if needed
+3. Push image to docker hub: docker push jbh14/quibble-backend:1.0.6
+4. Create Cloud Run deployment via UI - list docker hub image URL, allow unauthenticated invocations, set port to 8000

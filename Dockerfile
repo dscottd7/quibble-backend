@@ -16,8 +16,9 @@ RUN pip install -r requirements.txt
 
 EXPOSE 8000
 
-# this last one only runs when we create a container from the image
-CMD uvicorn app.main:app --port=8000 --host=0.0.0.0 --reload
+# this last one only runs when we create a container from the image - do NOT use "--reload" for actual deployment
+# Set the command using JSON format for improved stability
+CMD ["uvicorn", "app.main:app", "--port", "8000", "--host", "0.0.0.0"]
 
 
 # TO BUILD IMAGE LOCALLY: docker build -t quibblebackend-image1 .

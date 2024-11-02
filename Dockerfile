@@ -1,22 +1,15 @@
-FROM python:3.9-slim
+FROM python:3.8.10-slim
 
-WORKDIR /app
-# set working directory - might need to change this, in the examples I see it's usually a non-existant
-#  directory that is created by the WORKDIR command
-#  could it just stay as the current? 
+WORKDIR /dockerapp
 
-# NEW - replaces COPY .. below
-COPY . /app
+COPY . /dockerapp
 
-# old COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
-# RUN playwright install chromium
-
-# old COPY . .
 
 EXPOSE 8000
 
-# this last one only runs when we create a container from the image - do NOT use "--reload" for actual deployment
+RUN playwright install chromium
+
 # Set the command using JSON format for improved stability
 CMD ["uvicorn", "app.main:app", "--port", "8000", "--host", "0.0.0.0"]
 

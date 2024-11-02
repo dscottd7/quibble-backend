@@ -1,2 +1,0 @@
-runtime: python311  # using Python 3.11
-entrypoint: gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app

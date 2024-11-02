@@ -5,9 +5,13 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from fastapi import HTTPException
 from time import sleep
+from fake_useragent import UserAgent
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
 
 def get_with_selenium(url: str) -> str:
     """Fetches page content using Selenium for JavaScript-rendered content"""
+
     chrome_options = Options()
     # Disable options were added to avoid pop-ups, however they still don't work. 
     chrome_options.add_argument("--headless")
@@ -23,12 +27,24 @@ def get_with_selenium(url: str) -> str:
     chrome_options.add_argument("--log-level=3") 
     chrome_options.add_argument("--silent")  
 
+    # Generate a random user-agent
+    ua = UserAgent()
+    chrome_options.add_argument(f"user-agent={ua.random}")
+
+    # Add headers and referrer
+    capabilities = DesiredCapabilities.CHROME.copy()
+    capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+    chrome_options.add_argument("referer=https://www.google.com/")
+    chrome_options.add_argument("accept-language=en-US,en;q=0.9")
+
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     try:
         driver.get(url)
-        sleep(2)  # Allow time for dynamic content to load
+        sleep(3)  # Allow time for dynamic content to load
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")  # Scroll to bottom of page
+        sleep(3)
         content = driver.page_source
         return content
     except Exception as e:

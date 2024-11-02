@@ -9,3 +9,4 @@ fake-useragent
 gunicorn
 playwright
 webdriver-manager
+selenium

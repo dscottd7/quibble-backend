@@ -35,9 +35,6 @@ uvicorn app.main:app --reload
 6. Access Swagger for testing:
 - Navigate to http://127.0.0.1:8000/docs in your browser to access the Swagger UI and test the /compare API route.
 
-## Team collobration 
-In services folder, scraper.py and openai_service.py can be modified and extended based on your development needs. Please feel free to delete any unnecessary functions. 
-
 ## Standard Git Workflow for Team Collaboration
 1. Check modified files: 
 ```
@@ -76,3 +73,22 @@ git push origin <branch-name>
 - selected_categories.py (Models): Validates the categories selected by the user and provides default categories if no specific ones are selected.
 - prompt_service.py (Services): Constructs the final prompt using selected categories, user preference, and parsed product details.
 - endpoints.py (API): Integrates all logic to fetch, parse, and create a refined prompt to send to OpenAI based on user input.
+
+2. Added Selenium with Chrome Webdriver 
+- Selenium’s compatibility across Windows, macOS, and Linux, combined with Chrome WebDriver, allows effective control of a headless browser to render JavaScript. This setup is suitable for both local and cloud-based environments.
+- The dependency of selenium and webdriver-manager are in requirements.txt, in your terminal, you can: 
+```
+pip install -r requirements.txt
+```
+- If an error indicates that webdriver_manager is missing, run the following commend to intall it:
+```
+pip install webdriver-manager
+```
+- Run the regular commend to initiate the server and start the program. 
+```
+source .venv/bin/activate  # Use this if you have Mac/Linux
+.\venv\Scripts\activate    # Use this if you have Windows
+
+uvicorn app.main:app --reload # Start the server to test
+```
+- This program kept get_with_aiohttp.py and get_with_playwright.py. You can test those methods by modifying endpoints url_html. 

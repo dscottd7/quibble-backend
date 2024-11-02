@@ -1,7 +1,7 @@
 FROM python:3.8.10-slim
 
 # Install Playwright and dependencies
-RUN pip install playwright && playwright install-deps
+#RUN pip install playwright && playwright install-deps
 
 WORKDIR /dockerapp
 
@@ -12,7 +12,7 @@ RUN pip install -r requirements.txt
 EXPOSE 8000
 
 # Install Playwright browsers (like Chromium)
-RUN playwright install chromium
+#RUN playwright install chromium
 
 # Set the command using JSON format for improved stability
 CMD ["uvicorn", "app.main:app", "--port", "8000", "--host", "0.0.0.0"]

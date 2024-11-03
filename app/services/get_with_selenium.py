@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from fastapi import HTTPException
+import time
 from time import sleep
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import random
@@ -23,10 +24,9 @@ def get_with_selenium(url: str) -> str:
     chrome_options.add_argument("--disable-software-rasterizer")
     chrome_options.add_argument("--no-default-browser-check")
     chrome_options.add_argument("--remote-debugging-port=9222")
-    chrome_options.add_argument("--log-level=3") 
-    chrome_options.add_argument("--silent")  
+    chrome_options.add_argument("--log-level=3")
+    chrome_options.add_argument("--silent")
 
-   
     # List of user-agent strings for simulating different browsers
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
@@ -37,6 +37,23 @@ def get_with_selenium(url: str) -> str:
     ]
     # Generate a random user-agent
     chrome_options.add_argument(f"user-agent={random.choice(USER_AGENTS)}")
+
+    # List of proxies
+    proxies = [
+        "198.23.239.134:6540",
+        "107.172.163.27:6543",
+        "173.211.0.148:6641",
+        "167.160.180.203:6754",
+        "173.0.9.70:5653",
+        "173.0.9.209:5792"
+    ]
+
+    # Randomly select a proxy
+    proxy = random.choice(proxies)
+    print(f"Using proxy: {proxy}")
+
+    # Add the selected proxy to Chrome options
+    chrome_options.add_argument(f"--proxy-server={proxy}")
 
     # Add headers and referrer
     capabilities = DesiredCapabilities.CHROME.copy()
@@ -49,11 +66,19 @@ def get_with_selenium(url: str) -> str:
 
     try:
         driver.get(url)
-        sleep(3)  # Allow time for dynamic content to load
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")  # Scroll to bottom of page
-        sleep(3)
-        content = driver.page_source
-        return content
+
+        # Store cookies to look like a real user
+        driver.get_cookies()
+
+        # Wait 2-5 seconds randomly for page to load
+        time.sleep(random.uniform(2, 5))
+
+        # Scroll to bottom of page
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+        # Return the page content
+        return driver.page_source
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Selenium error: {str(e)}")
     finally:

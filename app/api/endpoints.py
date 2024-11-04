@@ -70,7 +70,7 @@ async def test_openai():
         if not os.getenv("OPENAI_API_KEY"):
             raise HTTPException(status_code=400, detail="OpenAI API Key not found")
         else:
-            return {"message": "OpenAI API Key found!"}
+            return {"message" : call_openai_api("What is the capital of Alaska?")} 
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

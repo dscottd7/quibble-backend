@@ -8,7 +8,7 @@ Brendan - Oct 31
 
 
 How to: build docker image, push to docker hub, deploy via Google Cloud Run UI
-1. Build image locally: docker build --platform linux/amd64 -t jbh14/quibble-backend:1.0.6 .
+1. Build image locally: docker build --platform linux/amd64 -t jbh14/quibble-backend:1.0.13 .
 - !!! --platform linux/amd64 IS CRUCIAL TO MAKE IT WORK ON GOOGLE CLOUD!!!
 2. Login to docker if needed
 3. Push image to docker hub: docker push jbh14/quibble-backend:1.0.6

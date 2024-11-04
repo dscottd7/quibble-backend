@@ -1,36 +1,35 @@
 #FROM python:3.8.10-slim
 # Use Playwright's pre-configured Docker image
-FROM mcr.microsoft.com/playwright/python:v1.35.0-focal
+#FROM mcr.microsoft.com/playwright/python:v1.35.0-focal
 
-# Install Chrome/Chromium dependencies > this might not be totally necessary if using pre-configured Playwright image
-RUN apt-get update && apt-get install -y \
-    libnss3 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libxcomposite1 \
-    libxrandr2 \
-    libxdamage1 \
-    libxkbcommon0 \
-    libgbm1 \
-    libasound2 \
-    libpangocairo-1.0-0 \
-    libpango-1.0-0 \
-    libatk-bridge2.0-0 \
-    libcairo2 \
-    libatspi2.0-0 \
-    libgtk-3-0 \
-    libdrm2 \
-    --no-install-recommends && rm -rf /var/lib/apt/lists/*
+# Use prebuilt image with Python, Chrome, and ChromeDriver - https://github.com/joyzoursky/docker-python-chromedriver/blob/master/py-debian/3.11-selenium/Dockerfile
+#FROM joyzoursky/python-chromedriver:latest
 
-# Install ChromeDriver and required Python packages
-RUN pip install webdriver-manager
-RUN pip install playwright selenium && playwright install chromium
+# alternative to the above - use python image and install chrome and chromedriver
+FROM python:3.11
 
-# Add ChromeDriver to PATH
-ENV PATH="/root/.wdm/drivers/chromedriver/linux64/114.0.5735.90:${PATH}"
+# Install prerequisites
+RUN apt-get update && apt-get install -y wget gnupg unzip
 
-WORKDIR /dockerapp
+# Add Google Chrome's GPG key
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
+
+# Add Google Chrome's repository (using amd64 here)
+RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+
+# Install Google Chrome
+RUN apt-get update && apt-get install -y google-chrome-stable
+
+# Install ChromeDriver
+RUN wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip" && \
+    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
+    rm /tmp/chromedriver.zip
+
+# Set display port to avoid crash
+ENV DISPLAY=:99
+# - end of stuff from joyzoursky
+
+WORKDIR /dockerapp 
 
 COPY . /dockerapp
 
@@ -49,7 +48,7 @@ CMD ["uvicorn", "app.main:app", "--port", "8000", "--host", "0.0.0.0"]
 # TO RUN IMAGE LOCALLY: docker run --rm -it -p 8000:8000 quibblebackend-image1 bash
 # WHEN RUNNING IMAGE: uvicorn app.main:app --host=0.0.0.0
 
-# TO BUILD IMAGE IN DOCKER HUB REPO: docker build -t jbh14/quibble-backend:1.0.4 .
+# TO BUILD IMAGE IN DOCKER HUB REPO: docker build -t jbh14/quibble-backend:1.0.13 .
 # TO PUSH IMAGE TO DOCKER HUB (login to docker first): docker push jbh14/quibble-backend:1.0.4
 
 # TO COMPOSE UP (uses compose.yml file): docker-compose up --build

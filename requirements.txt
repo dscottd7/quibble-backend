@@ -10,3 +10,4 @@ gunicorn
 playwright
 webdriver-manager
 selenium
+chromedriver-binary

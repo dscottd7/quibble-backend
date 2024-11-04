@@ -1,15 +1,28 @@
+import logging
+import random
+from fastapi import HTTPException
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
-from fastapi import HTTPException
-from time import sleep
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-import random
+from urllib.parse import urlparse
+from time import sleep
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def get_with_selenium(url: str) -> str:
+def get_with_selenium(url: str, max_retries: int = 3) -> str:
     """Fetches page content using Selenium for JavaScript-rendered content"""
+
+    # Check URL validity
+    parsed_url = urlparse(url)
+    if not parsed_url.scheme or not parsed_url.netloc:
+        logger.error(f"Invalid URL: {url}")
+        raise HTTPException(status_code=400, detail="Invalid URL provided")
 
     chrome_options = Options()
     # Disable options were added to avoid pop-ups, however they still don't work. 
@@ -24,9 +37,8 @@ def get_with_selenium(url: str) -> str:
     chrome_options.add_argument("--no-default-browser-check")
     chrome_options.add_argument("--remote-debugging-port=9222")
     chrome_options.add_argument("--log-level=3") 
-    chrome_options.add_argument("--silent")  
+    chrome_options.add_argument("--silent")
 
-   
     # List of user-agent strings for simulating different browsers
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
@@ -37,24 +49,50 @@ def get_with_selenium(url: str) -> str:
     ]
     # Generate a random user-agent
     chrome_options.add_argument(f"user-agent={random.choice(USER_AGENTS)}")
-
-    # Add headers and referrer
-    capabilities = DesiredCapabilities.CHROME.copy()
-    capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
     chrome_options.add_argument("referer=https://www.google.com/")
     chrome_options.add_argument("accept-language=en-US,en;q=0.9")
 
+    # Logging preferences for capturing performance logs
+    capabilities = DesiredCapabilities.CHROME.copy()
+    capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+    
+    # Set up the Chrome driver service
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    try:
-        driver.get(url)
-        sleep(3)  # Allow time for dynamic content to load
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")  # Scroll to bottom of page
-        sleep(3)
-        content = driver.page_source
-        return content
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Selenium error: {str(e)}")
-    finally:
-        driver.quit()
+    # Retry fetching the URL multiple times
+    for attempt in range(1, max_retries + 1):
+        try:
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            driver.set_page_load_timeout(15)  # Timeout setting
+
+            logger.info(f"Fetching URL: {url} (Attempt {attempt})")
+            driver.get(url)
+            sleep(2)  # Allow initial page load
+
+            # Scroll to bottom to load dynamic content
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            sleep(2)  # Wait for additional content
+
+            content = driver.page_source
+            return content
+
+        except TimeoutException as e:
+            logger.warning(f"Timeout while fetching {url}: {e}")
+            if attempt == max_retries:
+                raise HTTPException(status_code=504, detail="Timeout while loading the page")
+
+        except WebDriverException as e:
+            logger.error(f"Selenium WebDriver error: {e}")
+            raise HTTPException(status_code=500, detail="Internal error with Selenium WebDriver")
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+
+        finally:
+            driver.quit()
+
+    # If all attempts fail
+    logger.error(f"Failed to retrieve content after {max_retries} attempts")
+    raise HTTPException(status_code=500, detail="Failed to retrieve content after multiple attempts")

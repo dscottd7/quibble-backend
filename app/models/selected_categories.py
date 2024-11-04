@@ -1,5 +1,6 @@
 from typing import List
 
+
 class SelectedCategories:
     VALID_CATEGORIES = ["Price", "Model", "Condition", "Features", "Estimated Delivery"]
 

@@ -5,8 +5,16 @@ from app.api import endpoints  # Import routes from endpoints.py
 import os
 import logging
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging for whole app
+logging.basicConfig(
+    level=logging.INFO,  # Set logging level to INFO or DEBUG as needed
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",  # Log format
+    handlers=[
+        logging.StreamHandler()  # Add StreamHandler to log to the console
+    ]
+)
+
+# Get logger for the current module
 logger = logging.getLogger(__name__)
 
 # Load environment variables

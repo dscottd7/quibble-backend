@@ -13,8 +13,7 @@ from app.services.clean_html import clean_html
 # Initialize the router
 router = APIRouter()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Get logger for the current module
 logger = logging.getLogger(__name__)
 
 

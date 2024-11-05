@@ -3,8 +3,7 @@ from bs4 import BeautifulSoup
 from typing import Optional
 import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Get logger for the current module
 logger = logging.getLogger(__name__)
 
 

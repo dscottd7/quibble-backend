@@ -10,14 +10,13 @@ from app.services.openai_thread import return_thread_from_prompt
 # Load environment variables
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Get logger for the current module
 logger = logging.getLogger(__name__)
 
 
 def call_openai_api(prompt: str):
     '''Function to call OpenAI API with the given prompt and return the response.'''
-    logger.info("Received prompt for OpenAI API.")
+    logger.info(f"Received prompt for OpenAI API: {prompt}")
 
     # check that we have an OpenAI key
     api_key = os.getenv("OPENAI_API_KEY")
@@ -36,7 +35,7 @@ def call_openai_api(prompt: str):
             response = return_thread_from_prompt(prompt)
 
         process_time = time.perf_counter() - start_time  # stopwatch OFF
-        logger.info("Received response from OpenAI API.")
+        logger.info(f"Received response from OpenAI API: {response}")
         logger.info(f"Processed OpenAI {openai_prompt_type} in {process_time:.4f} seconds.")
 
         return response

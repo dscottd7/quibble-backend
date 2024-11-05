@@ -5,8 +5,7 @@ import os
 import logging
 import openai
 
-# Set up logging
-logging.basicConfig(level=logging.ERROR)
+# Get logger for the current module
 logger = logging.getLogger(__name__)
 
 

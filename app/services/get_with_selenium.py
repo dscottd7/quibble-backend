@@ -10,8 +10,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from urllib.parse import urlparse
 from time import sleep
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Get logger for the current module
 logger = logging.getLogger(__name__)
 
 

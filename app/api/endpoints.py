@@ -10,6 +10,8 @@ from app.models.scrape_request import ScrapeRequest
 from app.services.get_with_selenium import get_with_selenium
 from app.services.clean_html import clean_html
 
+import os
+
 # Initialize the router
 router = APIRouter()
 
@@ -80,21 +82,15 @@ def scrape_url(request: ScrapeRequest):
 
 
 @router.post("/openai-test")
-async def test_openai(urls: URLRequest):
-    """ Created a route to test OpenAi itegration independently. 
-    This should be modified. Current function is not working """
-    try:
-        # Generate a simple prompt
-        prompt = f"Compare the following two products:\n\nProduct 1: \n{urls.url1}\n\nProduct 2:\n{urls.url2}"
-
-        # Call OpenAI API to get comparison results
-        try:
-            openai_response = call_openai_api(prompt)
-            return {"comparison": openai_response.get("choices")[0].get("text")}
-        except Exception as e:
-            logger.error(f"OpenAI test API call failed: {e}")
-            raise HTTPException(status_code=502, detail="OpenAI API call failed")
+async def test_openai():
+    """ Creates a simple prompt to OpenAI to verify we can use API successfully. """
+    try:        
+        # do we have an OpenAI API key?
+        if not os.getenv("OPENAI_API_KEY"):
+            raise HTTPException(status_code=400, detail="OpenAI API Key not found")
+        else:
+            return {"message" : call_openai_api("What is the capital of Alaska?")} 
 
     except Exception as e:
-        logger.critical(f"Unexpected error in /openai-test route: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=400, detail=str(e))
+    

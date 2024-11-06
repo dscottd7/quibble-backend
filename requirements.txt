@@ -6,6 +6,8 @@ python-dotenv==1.0.1
 uvicorn==0.31.0
 aiohttp
 fake-useragent
-selenium
+gunicorn
 playwright
 webdriver-manager
+selenium
+chromedriver-binary

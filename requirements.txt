@@ -11,3 +11,4 @@ playwright
 webdriver-manager
 selenium
 chromedriver-binary
+sse-starlette

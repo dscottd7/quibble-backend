@@ -14,10 +14,14 @@ print(f"OpenAI API Key: {os.getenv('OPENAI_API_KEY')}")# For testing purpose
 # Initialize FastAPI app
 app = FastAPI()
 
+# URLs we'll accept traffic from
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")  # For local testing - defaults to localhost
+cloud_run_frontend_url = "https://quibble-358506364187.us-central1.run.app" # our deployed frontend app URL
+
 # Enable CORS for frontend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL","http://localhost:3000")], # Frontend URL placeholder
+    allow_origins=[frontend_url, cloud_run_frontend_url],
     allow_credentials=True, # Enable sending cookies and authentication from frontend
     allow_methods=["*"],
     allow_headers=["*"],

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def call_openai_api(prompt: str):
     '''Function to call OpenAI API with the given prompt and return the response.'''
-    logger.info(f"Received prompt for OpenAI API: {prompt}")
+    logger.info(f"Received prompt for OpenAI API call")  # removed printing of {prompt} to make output more readable
 
     # check that we have an OpenAI key
     api_key = os.getenv("OPENAI_API_KEY")

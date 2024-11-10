@@ -1,4 +1,3 @@
-# comparison_manager.py
 import asyncio
 import logging
 from typing import Optional, Dict, List
@@ -6,43 +5,24 @@ from fastapi import WebSocket
 from app.services.get_with_selenium import get_with_selenium
 from app.services.clean_html import clean_html
 from app.services.openai_service import call_openai_api
-from app.services.prompt_service import create_summary_prompt, create_comparison_prompt
+from app.services.prompt_service import create_prompt
 
 logger = logging.getLogger(__name__)
-
-
-async def generate_summary(content: str, user_input: dict) -> str:
-    """Generate summary using OpenAI API"""
-    prompt = create_summary_prompt(
-        content, 
-        user_input['selected_categories'], 
-        user_input['user_preference']
-    )
-    return await asyncio.to_thread(call_openai_api, prompt)
-
-
-async def generate_comparison(content1: str, content2: str) -> str:
-    """Generate comparison using OpenAI API"""
-    prompt = create_comparison_prompt(
-        content1,
-        content2
-    )
-    return await asyncio.to_thread(call_openai_api, prompt)
 
 
 class ComparisonManager:
     def __init__(self):
         self.active_tasks: Dict[str, List[asyncio.Task]] = {}
-        self._closed_websockets: set[str] = set() 
+        self._closed_websockets: set[str] = set()
+        self._cancelled_tasks: set[str] = set()
 
     async def process_single_url(
         self,
         websocket: WebSocket,
         url: str,
         url_number: int,
-        user_input: dict
     ) -> Optional[str]:
-        """Process a single URL's pipeline independently"""
+        """Process a single URL and return its content"""
         task_id = str(id(websocket))
         logger.info(f"Processing URL {url_number}: {url}")
         
@@ -50,23 +30,16 @@ class ComparisonManager:
             if task_id in self._closed_websockets:
                 return None
 
-            # Step 1: Scrape URL
+            # Scrape URL
             await self.send_status(websocket, "progress", f"Scraping URL {url_number}...")
             
-            # Get HTML content
-            html_content = await get_with_selenium(url)
+            # Pass task_id to get_with_selenium
+            html_content = await get_with_selenium(url, task_id=task_id)
             logger.info(f"[URL{url_number}] Raw HTML length: {len(html_content)}")
             
             # Clean HTML
             parsed_content = clean_html(html_content)
-            logger.info(f"[URL{url_number}] Cleaned content: {parsed_content[:200]}...")  # Log first 200 chars
-            
-            # Step 2: Generate summary
-            logger.info(f"[URL{url_number}] Generating summary")
-            summary = await generate_summary(parsed_content, user_input)
-            logger.info(f"[URL{url_number}] Generated summary: {summary[:200]}...")  # Log first 200 chars
-            
-            await self.send_status(websocket, f"summary{url_number}", None, summary)
+            logger.info(f"[URL{url_number}] Cleaned content length: {len(parsed_content)}")
             
             return parsed_content
                 
@@ -115,8 +88,7 @@ class ComparisonManager:
                 self.process_single_url(
                     websocket,
                     urls['url1'],
-                    1,
-                    user_input
+                    1
                 ),
                 name=f"URL1-{urls['url1']}"
             )
@@ -125,8 +97,7 @@ class ComparisonManager:
                 self.process_single_url(
                     websocket,
                     urls['url2'],
-                    2,
-                    user_input
+                    2
                 ),
                 name=f"URL2-{urls['url2']}"
             )
@@ -146,13 +117,22 @@ class ComparisonManager:
                 )
                 return
                 
-            # Generate final comparison using the processed content
+            # Generate comparison using both URLs' content
             try:
-                logger.info("Generating final comparison...")
+                logger.info("Generating comparison...")
                 logger.info(f"Content 1 length: {len(results[0]) if results[0] else 0}")
                 logger.info(f"Content 2 length: {len(results[1]) if results[1] else 0}")
                 
-                comparison = await generate_comparison(results[0], results[1])
+                # Create a single prompt for comparison
+                prompt = create_prompt(
+                    results[0],
+                    results[1],
+                    user_input['selected_categories'],
+                    user_input['user_preference']
+                )
+                
+                # Make single call to OpenAI
+                comparison = await asyncio.to_thread(call_openai_api, prompt)
                 await self.send_status(websocket, "comparison", None, comparison)
                 
             except Exception as e:
@@ -174,10 +154,33 @@ class ComparisonManager:
         finally:
             self.active_tasks.pop(task_id, None)
 
+    async def handle_client_disconnect(self, websocket: WebSocket):
+        """Handle client disconnection and cleanup"""
+        task_id = str(id(websocket))
+        logger.info(f"Client disconnected, cleaning up task {task_id}")
+        
+        self._cancelled_tasks.add(task_id)
+        self.cancel_task(task_id)
+        self._closed_websockets.add(task_id)
+        
+        # Cleanup after a delay to ensure all processes are stopped
+        await asyncio.sleep(1)
+        self._cancelled_tasks.discard(task_id)
+        self._closed_websockets.discard(task_id)
+        self.active_tasks.pop(task_id, None)
+
     def cancel_task(self, task_id: str) -> None:
         """Cancels all tasks associated with a task_id"""
         tasks = self.active_tasks.get(task_id, [])
         for task in tasks:
             if not task.done():
                 task.cancel()
-        self.active_tasks.pop(task_id, None)
+                logger.info(f"Cancelled task {task.get_name()}")
+        
+        # Clean up Selenium drivers if they're still running
+        try:
+            # This assumes you have access to the selenium pool
+            from app.services.selenium_pool import driver_pool
+            driver_pool.cleanup_for_task(task_id)
+        except Exception as e:
+            logger.error(f"Error cleaning up Selenium drivers: {e}")

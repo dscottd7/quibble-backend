@@ -7,6 +7,7 @@ import asyncio
 import logging
 from typing import AsyncGenerator
 import random
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,8 @@ class WebDriverPool:
         self._init_lock = asyncio.Lock()
         self._initialized = False
         self._driver_service = None
+        self._active_drivers: Dict[str, List[webdriver.Chrome]] = {}
+        self._retry_delay = 1.0  # Delay between retries in seconds
 
     async def init(self):
         """Initialize the WebDriver service once"""
@@ -33,81 +36,80 @@ class WebDriverPool:
     def _create_chrome_options(self) -> Options:
         """Create Chrome options with randomized user agent"""
         chrome_options = Options()
-        
-        # Basic options
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        
-        # Security and performance options
-        chrome_options.add_argument("--disable-popup-blocking")
-        chrome_options.add_argument("--disable-extensions")
-        chrome_options.add_argument("--disable-infobars")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--disable-software-rasterizer")
-        chrome_options.add_argument("--no-default-browser-check")
-        
-        # Debugging and logging
-        chrome_options.add_argument("--remote-debugging-port=9222")
         chrome_options.add_argument("--log-level=3")
-        chrome_options.add_argument("--silent")
         
-        # Headers and identity
-        chrome_options.add_argument("referer=https://www.google.com/")
-        chrome_options.add_argument("accept-language=en-US,en;q=0.9")
-
-        # Performance options
-        chrome_options.add_argument("--disable-backgrounding-occluded-windows")
-        chrome_options.add_argument("--disable-renderer-backgrounding")
-        
-        # Set performance logging preferences
-        chrome_options.set_capability(
-            "goog:loggingPrefs", 
-            {"performance": "ALL", "browser": "ALL"}
-        )
-
-        # User agents
         USER_AGENTS = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Version/14.0 Safari/537.36",
-            "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Mobile Safari/537.36"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0"
         ]
         chrome_options.add_argument(f"user-agent={random.choice(USER_AGENTS)}")
-        
         return chrome_options
 
-    @asynccontextmanager
-    async def acquire_driver(self) -> AsyncGenerator[webdriver.Chrome, None]:
-        """Acquire a WebDriver instance from the pool"""
-        await self.init()  # Ensure service is initialized
+    async def _create_driver_with_retry(self, max_retries: int = 3) -> webdriver.Chrome:
+        """Create a WebDriver with retry logic"""
+        last_exception = None
         
-        async with self._semaphore:
-            driver = None
+        for attempt in range(max_retries):
             try:
-                # Create driver without deprecated desired_capabilities
                 driver = webdriver.Chrome(
                     service=self._driver_service,
                     options=self._create_chrome_options()
                 )
                 driver.set_page_load_timeout(30)
+                return driver
+            except Exception as e:
+                last_exception = e
+                logger.warning(f"Failed to create driver (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(self._retry_delay * (attempt + 1))  # Exponential backoff
+        
+        raise last_exception
+
+    @asynccontextmanager
+    async def acquire_driver(self, task_id: str) -> AsyncGenerator[webdriver.Chrome, None]:
+        """Acquire a WebDriver instance from the pool"""
+        await self.init()
+        
+        async with self._semaphore:
+            driver = None
+            try:
+                driver = await self._create_driver_with_retry()
                 
-                # Set window size for consistency
-                driver.set_window_size(1920, 1080)
+                # Track the driver for this task
+                if task_id not in self._active_drivers:
+                    self._active_drivers[task_id] = []
+                self._active_drivers[task_id].append(driver)
                 
                 yield driver
-                
-            except Exception as e:
-                logger.error(f"Error creating WebDriver: {e}")
-                raise
-                
             finally:
                 if driver:
                     try:
                         driver.quit()
+                        await asyncio.sleep(0.5)
+                        
+                        # Remove from tracking
+                        if task_id in self._active_drivers:
+                            self._active_drivers[task_id].remove(driver)
+                            if not self._active_drivers[task_id]:
+                                del self._active_drivers[task_id]
                     except Exception as e:
                         logger.error(f"Error closing WebDriver: {e}")
+
+    def cleanup_for_task(self, task_id: str):
+        """Cleanup all drivers associated with a task"""
+        if task_id in self._active_drivers:
+            drivers = self._active_drivers[task_id]
+            for driver in drivers:
+                try:
+                    driver.quit()
+                except Exception as e:
+                    logger.error(f"Error closing driver during cleanup: {e}")
+            del self._active_drivers[task_id]
 
 
 # Create a global instance of the WebDriver pool

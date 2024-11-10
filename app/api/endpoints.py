@@ -63,6 +63,7 @@ async def websocket_compare(websocket: WebSocket) -> None:
 
     except WebSocketDisconnect:
         logger.info("Client disconnected")
+        await comparison_manager.handle_client_disconnect(websocket)
     except json.JSONDecodeError:
         logger.error("Invalid JSON received")
         await comparison_manager.send_status(

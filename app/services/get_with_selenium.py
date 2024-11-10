@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 async def get_with_selenium(url: str, task_id: str = None, max_retries: int = 3) -> str:
-    """Fetches page content using Selenium with proper resource management"""
-    
+    """Fetches page content using Selenium WebDriver"""
+
     parsed_url = urlparse(url)
     if not parsed_url.scheme or not parsed_url.netloc:
         logger.error(f"Invalid URL: {url}")
@@ -22,7 +22,7 @@ async def get_with_selenium(url: str, task_id: str = None, max_retries: int = 3)
             # Now passing task_id to acquire_driver
             async with driver_pool.acquire_driver(task_id) as driver:
                 logger.info(f"Fetching URL: {url} (Attempt {attempt})")
-                
+
                 # Using asyncio.to_thread for potentially blocking Selenium operations
                 def selenium_ops():
                     driver.get(url)
@@ -30,7 +30,7 @@ async def get_with_selenium(url: str, task_id: str = None, max_retries: int = 3)
                     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                     sleep(2)  # Wait for additional content
                     return driver.page_source
-                
+
                 content = await asyncio.to_thread(selenium_ops)
                 logger.info(f"Successfully retrieved content for {url} (length: {len(content)})")
                 return content

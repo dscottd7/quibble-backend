@@ -41,11 +41,15 @@ class WebDriverPool:
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--log-level=3")
-        
+        chrome_options.add_argument("referer=https://www.google.com/")
+        chrome_options.add_argument("accept-language=en-US,en;q=0.9")
+
         USER_AGENTS = [
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Version/14.0 Safari/537.36",
+            "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Mobile Safari/537.36"
         ]
         chrome_options.add_argument(f"user-agent={random.choice(USER_AGENTS)}")
         return chrome_options
@@ -53,7 +57,7 @@ class WebDriverPool:
     async def _create_driver_with_retry(self, max_retries: int = 3) -> webdriver.Chrome:
         """Create a WebDriver with retry logic"""
         last_exception = None
-        
+
         for attempt in range(max_retries):
             try:
                 driver = webdriver.Chrome(
@@ -67,31 +71,31 @@ class WebDriverPool:
                 logger.warning(f"Failed to create driver (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     await asyncio.sleep(self._retry_delay * (attempt + 1))  # Exponential backoff
-        
+
         raise last_exception
 
     @asynccontextmanager
     async def acquire_driver(self, task_id: str) -> AsyncGenerator[webdriver.Chrome, None]:
         """Acquire a WebDriver instance from the pool"""
         await self.init()
-        
+
         async with self._semaphore:
             driver = None
             try:
                 driver = await self._create_driver_with_retry()
-                
+
                 # Track the driver for this task
                 if task_id not in self._active_drivers:
                     self._active_drivers[task_id] = []
                 self._active_drivers[task_id].append(driver)
-                
+
                 yield driver
             finally:
                 if driver:
                     try:
                         driver.quit()
                         await asyncio.sleep(0.5)
-                        
+
                         # Remove from tracking
                         if task_id in self._active_drivers:
                             self._active_drivers[task_id].remove(driver)

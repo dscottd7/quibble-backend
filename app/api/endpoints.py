@@ -11,6 +11,7 @@ from app.services.openai_service import call_openai_api
 from app.models.scrape_request import ScrapeRequest
 from app.services.get_with_selenium import get_with_selenium
 from app.services.clean_html import clean_html
+from app.services.structured_openai_service import call_openai_api_structured
 import os
 
 router = APIRouter()
@@ -128,6 +129,43 @@ async def compare_urls(urls: URLRequest, user_input: UserInput):
         # Handle unexpected errors
         logger.critical(f"Unexpected error in /compare route: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
+    
+@router.post("/structured_compare")
+async def structured_compare_urls(urls: URLRequest, user_input: UserInput):
+    try:
+        try:
+            SelectedCategories.validate_categories(user_input.selected_categories)
+        except ValueError as e:
+            logger.warning(f"Invalid categories: {user_input.selected_categories} - {e}")
+            raise HTTPException(status_code=400, detail="Invalid selected categories")
+    
+        # Fetch and clean HTML content for each URL
+        parsed_url1_html = await fetch_and_clean(str(urls.url1))
+        parsed_url2_html = await fetch_and_clean(str(urls.url2))
+
+        # Generate the prompt for OpenAI API
+        try:
+            prompt = create_prompt(parsed_url1_html, parsed_url2_html, user_input.selected_categories, user_input.user_preference)
+        except Exception as e:
+            logger.error(f"Error creating prompt: {e}")
+            raise HTTPException(status_code=500, detail="Error creating prompt")
+        
+        # Call OpenAI API for comparison
+        try: 
+            openai_response = call_openai_api_structured(prompt)
+        except Exception as e:
+            logger.error(f"OpenAI API call failed: {e}")
+            raise HTTPException(status_code=502, detail="Error calling OpenAI API")
+
+        return {"comparison": openai_response}
+    except HTTPException as e:
+        # Allow raised HTTPExceptions to propagate
+        raise e
+    except Exception as e:
+        # Handle unexpected errors
+        logger.critical(f"Unexpected error in /compare route: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 
 
 @router.post("/scrape")

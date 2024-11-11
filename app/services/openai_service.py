@@ -24,8 +24,8 @@ def call_openai_api(prompt: str):
         logger.error("OpenAI API key not found.")
         raise HTTPException(status_code=500, detail="OpenAI API key not configured. Please check environment variables.")
 
-    openai_prompt_type = "completion" # toggle to "thread" if desired
-    start_time = time.perf_counter() # start stopwatch
+    openai_prompt_type = "completion"  # toggle to "thread" if desired
+    start_time = time.perf_counter()  # start stopwatch
 
     try:
         # Call OpenAI API

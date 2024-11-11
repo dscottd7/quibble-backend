@@ -9,6 +9,7 @@ import openai
 logger = logging.getLogger(__name__)
 
 class ProductComparison(BaseModel):
+    brief_comparison_title: str
     product1: str
     product2: str
     pros_product1: list[str]

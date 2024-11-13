@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import Optional, Dict, List
 from fastapi import WebSocket
-from app.services.get_with_selenium import get_with_selenium
+from app.services.get_with_selenium import get_with_selenium_async
 from app.services.clean_html import clean_html
 from app.services.openai_service import call_openai_api
 from app.services.prompt_service import create_prompt
@@ -114,8 +114,8 @@ class ComparisonManager:
             # Scrape URL
             await self.send_status(websocket, "progress", f"Scraping URL {url_number}...")
 
-            # Pass task_id to get_with_selenium
-            html_content = await get_with_selenium(url, task_id=task_id)
+            # Pass task_id to get_with_selenium_async
+            html_content = await get_with_selenium_async(url, task_id=task_id)
             logger.info(f"[URL{url_number}] Raw HTML length: {len(html_content)}")
 
             # Clean HTML

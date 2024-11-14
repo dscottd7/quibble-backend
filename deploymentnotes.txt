@@ -23,3 +23,7 @@ How to: build and test locally:
 3. To launch uvicorn server in local container: uvicorn app.main:app --host=0.0.0.0
 4. Alternative apporach - "compose up" (uses compose.yml file to build image and run containter): docker-compose up --build
 - "--build" flag is to rebuild the image if it already exists
+
+New - building for different architectures (considered in dockerfile)
+docker buildx build --platform linux/arm64 -t quibble-backend-image1 .
+docker buildx build --platform linux/amd64 -t quibble-backend-image1 .

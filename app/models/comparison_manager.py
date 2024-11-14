@@ -75,6 +75,7 @@ class ComparisonManager:
                 )
 
                 # Make call to OpenAI
+                await self.send_status(websocket, "progress", f"Generating comparison...")
                 comparison = await asyncio.to_thread(call_openai_api, prompt)
                 await self.send_status(websocket, "comparison", None, comparison)
 
@@ -112,13 +113,14 @@ class ComparisonManager:
                 return None
 
             # Scrape URL
-            await self.send_status(websocket, "progress", f"Scraping URL {url_number}...")
+            await self.send_status(websocket, "progress", f"Gathering info...")
 
             # Pass task_id to get_with_selenium_async
             html_content = await get_with_selenium_async(url, task_id=task_id)
             logger.info(f"[URL{url_number}] Raw HTML length: {len(html_content)}")
 
             # Clean HTML
+            await self.send_status(websocket, "progress", f"Analyzing...")
             parsed_content = clean_html(html_content)
             logger.info(f"[URL{url_number}] Cleaned content length: {len(parsed_content)}")
 

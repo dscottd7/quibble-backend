@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def call_openai_api(prompt: str):
     '''Function to call OpenAI API with the given prompt and return the response.'''
-    logger.info(f"Received prompt for OpenAI API: {prompt}")
+    logger.info(f"Received prompt for OpenAI API call")  # removed printing of {prompt} to make output more readable
 
     # check that we have an OpenAI key
     api_key = os.getenv("OPENAI_API_KEY")
@@ -24,8 +24,8 @@ def call_openai_api(prompt: str):
         logger.error("OpenAI API key not found.")
         raise HTTPException(status_code=500, detail="OpenAI API key not configured. Please check environment variables.")
 
-    openai_prompt_type = "completion" # toggle to "thread" if desired
-    start_time = time.perf_counter() # start stopwatch
+    openai_prompt_type = "completion"  # toggle to "thread" if desired
+    start_time = time.perf_counter()  # start stopwatch
 
     try:
         # Call OpenAI API

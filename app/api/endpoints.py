@@ -80,6 +80,62 @@ async def websocket_compare(websocket: WebSocket) -> None:
             str(e)
         )
 
+@router.websocket("/ws/compare/structured")
+async def websocket_structured_compare(websocket: WebSocket) -> None:
+    await websocket.accept()
+    try:
+        # Receive the initial request data
+        raw_data = await websocket.receive_json()
+
+        # Debug log the received data
+        logger.info("Received WebSocket data:")
+        logger.info(f"Raw data: {raw_data}")
+
+        if not isinstance(raw_data, dict):
+            await comparison_manager.send_status(
+                websocket,
+                "error",
+                "Invalid request format"
+            )
+            return
+
+        urls = {
+            'url1': raw_data['urls']['url1'].strip(),
+            'url2': raw_data['urls']['url2'].strip()
+        }
+        user_input = raw_data.get('user_input')
+
+        # Debug log the extracted URLs
+        logger.info(f"Extracted URLs: {urls}")
+
+        if not urls or not user_input:
+            await comparison_manager.send_status(
+                websocket,
+                "error",
+                "Missing required fields in request"
+            )
+            return
+
+        # Start the comparison process
+        await comparison_manager.start_structured_comparison(websocket, urls, user_input)
+    except WebSocketDisconnect:
+        logger.info("Client disconnected")
+        await comparison_manager.handle_client_disconnect(websocket)
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON received")
+        await comparison_manager.send_status(
+            websocket,
+            "error",
+            "Invalid JSON format"
+        )
+    except Exception as e:
+        logger.error(f"Error in websocket endpoint: {e}")
+        await comparison_manager.send_status(
+            websocket,
+            "error",
+            str(e)
+        )
+
 
 async def fetch_and_clean(url: str):
     """Helper function to /compare route to fetch and clean HTML content with exception handling."""

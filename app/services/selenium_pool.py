@@ -1,11 +1,14 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from contextlib import asynccontextmanager
 import asyncio
 import logging
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict, List
 import random
 from typing import Dict, List
 
@@ -20,7 +23,7 @@ class WebDriverPool:
         self._initialized = False
         self._driver_service = None
         self._active_drivers: Dict[str, List[webdriver.Chrome]] = {}
-        self._retry_delay = 1.0  # Delay between retries in seconds
+        self._retry_delay = 1.0
 
     async def init(self):
         """Initialize the WebDriver service once"""
@@ -34,27 +37,47 @@ class WebDriverPool:
                     raise
 
     def _create_chrome_options(self) -> Options:
-        """Create Chrome options with randomized user agent"""
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--log-level=3")
-        chrome_options.add_argument("referer=https://www.google.com/")
-        chrome_options.add_argument("accept-language=en-US,en;q=0.9")
-
+        """Create Chrome options with enhanced anti-detection measures"""
+        options = Options()
+        
+        # Basic options
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-infobars')
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument('--disable-extensions')
+        options.add_argument('--no-first-run')
+        options.add_argument('--no-default-browser-check')
+        options.add_argument('--no-service-autorun')
+        options.add_argument('--password-store=basic')
+        options.add_argument('--disable-notifications')
+        
+        # Random viewport
+        viewports = [(1920, 1080), (1366, 768), (1536, 864), (1440, 900)]
+        viewport = random.choice(viewports)
+        options.add_argument(f'--window-size={viewport[0]},{viewport[1]}')
+        
+        # Random user agent
         USER_AGENTS = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:92.0) Gecko/20100101 Firefox/92.0",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Version/14.0 Safari/537.36",
-            "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Mobile Safari/537.36"
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
         ]
-        chrome_options.add_argument(f"user-agent={random.choice(USER_AGENTS)}")
-        return chrome_options
+        options.add_argument(f'user-agent={random.choice(USER_AGENTS)}')
+        
+        # Language and headers
+        LANGUAGES = ["en-US,en;q=0.9", "en-GB,en;q=0.9", "en-CA,en;q=0.9"]
+        options.add_argument(f'--lang={random.choice(LANGUAGES)}')
+        options.add_argument(f'--accept-language={random.choice(LANGUAGES)}')
+        options.add_argument('--accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+        
+        # Set legitimate referrer
+        options.add_argument('--referrer=https://www.google.com/')
+        
+        return options
 
-    async def _create_driver_with_retry(self, max_retries: int = 3) -> webdriver.Chrome:
+    async def _create_driver_with_retry(self, max_retries: int = 2) -> webdriver.Chrome:
         """Create a WebDriver with retry logic"""
         last_exception = None
 
@@ -70,7 +93,7 @@ class WebDriverPool:
                 last_exception = e
                 logger.warning(f"Failed to create driver (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(self._retry_delay * (attempt + 1))  # Exponential backoff
+                    await asyncio.sleep(self._retry_delay * (attempt + 1))
 
         raise last_exception
 
@@ -84,7 +107,6 @@ class WebDriverPool:
             try:
                 driver = await self._create_driver_with_retry()
 
-                # Track the driver for this task
                 if task_id not in self._active_drivers:
                     self._active_drivers[task_id] = []
                 self._active_drivers[task_id].append(driver)
@@ -96,7 +118,6 @@ class WebDriverPool:
                         driver.quit()
                         await asyncio.sleep(0.5)
 
-                        # Remove from tracking
                         if task_id in self._active_drivers:
                             self._active_drivers[task_id].remove(driver)
                             if not self._active_drivers[task_id]:
@@ -118,3 +139,6 @@ class WebDriverPool:
 
 # Create a global instance of the WebDriver pool
 driver_pool = WebDriverPool(max_drivers=2)
+
+# Export the driver_pool instance
+__all__ = ['driver_pool']

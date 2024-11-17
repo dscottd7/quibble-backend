@@ -19,8 +19,6 @@ source .venv/bin/activate  # Use this if you have Mac/Linux
 3. Install required dependencies:
 ```
 pip install -r requirements.txt
-
-playwright install chromium  # Use this for new /scrape route
 ```
 4. Set up environment variables:
 - Create a .env file in the root of your project with the following variables:

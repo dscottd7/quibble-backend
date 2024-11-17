@@ -172,17 +172,10 @@ async def structured_compare_urls(urls: URLRequest, user_input: UserInput):
 @router.post("/scrape")
 def scrape_url(request: ScrapeRequest):
     """ Experimental route to handle scraping for user agent blocking and JS rendering """
-    # try:
-    #     # Using selenium to render page and express any JavaScript
-    #     content = get_with_selenium(str(request.url))
-    #     return {"text": clean_html(content)}
-    # except Exception as e:
-    #     logger.error(f"Error scraping URL {request.url}: {e}")
-    #     raise HTTPException(status_code=500, detail="Error scraping the URL")
     try:
         logger.info(f"Received scrape request for URL: {request.url}")
         content = get_with_selenium(str(request.url))
-        return {"content": content}
+        return {"text": clean_html(content)}
     except HTTPException as e:
         logger.error(f"HTTP Exception occurred: {e.detail}")
         raise e

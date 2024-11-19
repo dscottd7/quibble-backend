@@ -5,18 +5,9 @@ from fastapi import HTTPException
 import os
 import logging
 import openai
+from app.models.product_comparison import ProductComparison
 
 logger = logging.getLogger(__name__)
-
-class ProductComparison(BaseModel):
-    brief_comparison_title: str
-    product1: str
-    product2: str
-    pros_product1: list[str]
-    pros_product2: list[str]
-    cons_product1: list[str]
-    cons_product2: list[str]
-    comparison_summary: str
 
 def structured_completion_from_prompt(prompt: str):
     client = initialize_openai_with_key()

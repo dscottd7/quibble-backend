@@ -2,91 +2,39 @@
 Backend application for Quibble
 
 ## Project Overview
-This project is a web-based application designed to compare products from different websites. It accepts two URLs, processes their content, and uses AI to generate a detailed comparison between the products. For now, the OpenAI logic is under construction, and the scraping logic is being developed.
+This project is a web-based application designed to compare products from different websites. It accepts two URLs, attempts to scrape product information from those web pages (using Selenium), and then prompts OpenAI to generate a detailed comparison between the products based on factors provided by the application's frontend.
 
 ## Installation
 1. Clone the repository: 
 ```
 git clone <repository_url>
 ```
-2. Create and activate a virtual environment: 
+2. If needed, install Python 3.11 (`undetected_chromedriver`, used in this app, is currently not supported by Python 3.12+)
 ```
-python3 -m venv .venv
+brew install python@3.11                    # Mac
+winget install -e --id Python.Python.3.11   # Windows
+```
+3. Create and activate a virtual environment: 
+```
+python3.11 -m venv .venv
 
-source .venv/bin/activate  # Use this if you have Mac/Linux
-.\venv\Scripts\activate    # Use this if you have Windows
+source .venv/bin/activate  # Mac/Linux
+.\venv\Scripts\activate    # Windows
 ```
-3. Install required dependencies:
+4. Install required dependencies:
 ```
 pip install -r requirements.txt
 ```
-4. Set up environment variables:
-- Create a .env file in the root of your project with the following variables:
+5. Set up environment variables:
+- Create a `.env` file in the root of your project with the following variables:
 ```
 OPENAI_API_KEY=your_openai_api_key
 FRONTEND_URL=http://localhost:3000
 ```
-5. Run the application:
+- **NOTE**: if deploying to cloud, replace `FRONTEND_URL` with the URL of the deployed frontend you plan to connect with, so CORS settings do not block traffic from your deployed frontend app.
+6. Run the application:
 ```
 uvicorn app.main:app --reload
 ```
-6. Access Swagger for testing:
-- Navigate to http://127.0.0.1:8000/docs in your browser to access the Swagger UI and test the /compare API route.
-
-## Standard Git Workflow for Team Collaboration
-1. Check modified files: 
-```
-git status
-```
-2. Add and commit changes: 
-```
-git add <specific-file>
-git add .  # To add all changed files
-```
-3. Ignore runtime files:
-- Add for examle .env, venv/, __pycache__/ to .gitignore.
-- Save .gitignore
-- Remove __pycache__ from Git's tracking with: 
-```
-git rm --cached -r app/api/__pycache__/  (check the right path by "git status")
-git rm --cached -r app/models/__pycache__/
-```
-- Commit the .gitignore file changes. 
-```
-git add .gitignore
-```
-4. Commit changes:
-```
-git commit -m "Describe changes"
-```
-5. Pull and push changes to avoid conflicts:
-```
-git pull origin <branch>
-git push origin <branch-name>
-```
-
-## Sprint II Project Updates for Quibble_backend
-1. Refine LLM prompt to improve response content
-- user_input.py (Models): Defines user inputs like selected_categories and user_preference.
-- selected_categories.py (Models): Validates the categories selected by the user and provides default categories if no specific ones are selected.
-- prompt_service.py (Services): Constructs the final prompt using selected categories, user preference, and parsed product details.
-- endpoints.py (API): Integrates all logic to fetch, parse, and create a refined prompt to send to OpenAI based on user input.
-
-2. Added Selenium with Chrome Webdriver 
-- Selenium’s compatibility across Windows, macOS, and Linux, combined with Chrome WebDriver, allows effective control of a headless browser to render JavaScript. This setup is suitable for both local and cloud-based environments.
-- The dependency of selenium and webdriver-manager are in requirements.txt, in your terminal, you can: 
-```
-pip install -r requirements.txt
-```
-- If an error indicates that webdriver_manager is missing, run the following commend to intall it:
-```
-pip install webdriver-manager
-```
-- Run the regular commend to initiate the server and start the program. 
-```
-source .venv/bin/activate  # Use this if you have Mac/Linux
-.\venv\Scripts\activate    # Use this if you have Windows
-
-uvicorn app.main:app --reload # Start the server to test
-```
-- This program kept get_with_aiohttp.py and get_with_playwright.py. You can test those methods by modifying endpoints url_html. 
+7. Access Swagger for testing:
+- Navigate to `http://127.0.0.1:8000/docs` in your browser to access the Swagger UI and test API routes (websockets will not appear there).

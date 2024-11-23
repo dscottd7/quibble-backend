@@ -17,6 +17,7 @@ winget install -e --id Python.Python.3.11   # Windows
 3. Create and activate a virtual environment: 
 ```
 python3.11 -m venv .venv
+py -3.11 -m venv .venv     # Windows
 
 source .venv/bin/activate  # Mac/Linux
 .\venv\Scripts\activate    # Windows

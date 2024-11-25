@@ -13,6 +13,7 @@ from app.services.get_with_selenium import get_with_selenium
 from app.services.clean_html import clean_html
 from app.services.structured_openai_service import call_openai_api_structured
 import os
+import traceback
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -185,7 +186,8 @@ async def compare_urls(urls: URLRequest, user_input: UserInput):
         # Handle unexpected errors
         logger.critical(f"Unexpected error in /compare route: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
+
+
 @router.post("/structured_compare")
 async def structured_compare_urls(urls: URLRequest, user_input: UserInput):
     try:
@@ -194,7 +196,7 @@ async def structured_compare_urls(urls: URLRequest, user_input: UserInput):
         except ValueError as e:
             logger.warning(f"Invalid categories: {user_input.selected_categories} - {e}")
             raise HTTPException(status_code=400, detail="Invalid selected categories")
-    
+
         # Fetch and clean HTML content for each URL
         parsed_url1_html = await fetch_and_clean(str(urls.url1))
         parsed_url2_html = await fetch_and_clean(str(urls.url2))
@@ -205,7 +207,7 @@ async def structured_compare_urls(urls: URLRequest, user_input: UserInput):
         except Exception as e:
             logger.error(f"Error creating prompt: {e}")
             raise HTTPException(status_code=500, detail="Error creating prompt")
-        
+
         # Call OpenAI API for comparison
         try: 
             openai_response = call_openai_api_structured(prompt)
@@ -223,17 +225,20 @@ async def structured_compare_urls(urls: URLRequest, user_input: UserInput):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-
 @router.post("/scrape")
 def scrape_url(request: ScrapeRequest):
     """ Experimental route to handle scraping for user agent blocking and JS rendering """
     try:
-        # Using selenium to render page and express any JavaScript
+        logger.info(f"Received scrape request for URL: {request.url}")
         content = get_with_selenium(str(request.url))
         return {"text": clean_html(content)}
+    except HTTPException as e:
+        logger.error(f"HTTP Exception occurred: {e.detail}")
+        raise e
     except Exception as e:
-        logger.error(f"Error scraping URL {request.url}: {e}")
-        raise HTTPException(status_code=500, detail="Error scraping the URL")
+        error_detail = f"Error scraping URL {request.url}: {str(e)}\n{traceback.format_exc()}"
+        logger.error(error_detail)
+        raise HTTPException(status_code=500, detail=error_detail)
 
 
 @router.post("/openai-test")

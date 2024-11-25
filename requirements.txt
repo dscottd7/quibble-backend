@@ -11,3 +11,5 @@ playwright
 webdriver-manager
 selenium
 chromedriver-binary
+undetected-chromedriver
+setuptools>=58.0.0

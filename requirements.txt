@@ -13,3 +13,5 @@ selenium
 chromedriver-binary
 undetected-chromedriver
 setuptools>=58.0.0
+pytest
+pytest-asyncio

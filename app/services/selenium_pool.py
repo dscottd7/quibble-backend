@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class WebDriverPool:
-    def __init__(self, max_drivers: int = 2):
+    def __init__(self, max_drivers: int = 4):
         self.max_drivers = max_drivers
         self._semaphore = asyncio.Semaphore(max_drivers)
         self._init_lock = asyncio.Lock()
@@ -106,18 +106,16 @@ class WebDriverPool:
             driver = None
             try:
                 driver = await self._create_driver_with_retry()
-
                 if task_id not in self._active_drivers:
                     self._active_drivers[task_id] = []
                 self._active_drivers[task_id].append(driver)
-
                 yield driver
             finally:
                 if driver:
                     try:
+                        await asyncio.sleep(3)
                         driver.quit()
-                        await asyncio.sleep(0.5)
-
+                        await asyncio.sleep(1)
                         if task_id in self._active_drivers:
                             self._active_drivers[task_id].remove(driver)
                             if not self._active_drivers[task_id]:

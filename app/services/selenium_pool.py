@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class WebDriverPool:
-    def __init__(self, max_drivers: int = 4):
+    def __init__(self, max_drivers: int = 2):
         self.max_drivers = max_drivers
         self._semaphore = asyncio.Semaphore(max_drivers)
         self._init_lock = asyncio.Lock()

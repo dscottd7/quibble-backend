@@ -31,7 +31,7 @@ This application requires both the frontend and backend services to be running f
 1. **AI-Generated Product Comparison**:
    - Processes two product URLs by scraping relevant product details.
    - Uses the OpenAI API to generate a structured comparison report, including pros, cons, and summary.
-
+   
 2. **Web Scraping with Selenium**:
    - Extracts detailed product information from provided URLs.
    - Handles complex website structures using Selenium to ensure accurate and comprehensive data retrieval.
@@ -48,7 +48,7 @@ This application requires both the frontend and backend services to be running f
    - Generates a detailed product comparison that includes product titles, pros, cons, and an overall summary.
 
 6. **Scalable Backend Architecture**:
-   - The backend is designed using FASTAPI to handle multiple endpoints interacting with different services.
+   - The backend is designed using FastAPI to handle multiple endpoints interacting with different services.
    - Implements asynchronous functions and efficient error handling to provide a robust and reliable backend service.
 
 

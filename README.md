@@ -10,7 +10,7 @@
 1. [Project Overview](#overview)
 2. [Backend Features](#product_features)
 3. [Quibble Architecture](#quibble_architecture)
-4. [Tech Stack](#tech_stack)
+4. [Backend Tech Stack](#tech_stack)
 5. [Available Scripts](#scripts)
 6. [Backend Walkthrough](#walkthrough)
 7. [Future Enhancements](#future_enhancement)
@@ -23,7 +23,9 @@ Quibble is an AI-powered product comparison tool designed to streamline the proc
 The Quibble backend utilizes Selenium to scrape product information from the specified web pages and uses OpenAI to generate detailed comparison reports, highlighting key features, pros, cons, and essential factors. Then, the backend communicates with the frontend through WebSockets, ensuring a real-time, responsive user experience. Quibble frontend then presents this comparison report to assist the user making well-informed purchasing decisions.
 
 This README provides a comprehensive guide to setting up and understanding the Quibble backend, which is built with FastAPI, Selenium, Websockets and deployed on Google Cloud. 
-You can access the site here: 
+This application requires both the frontend and backend services to be running for proper functionality. 
+- **You can access Quibble backend repo here: https://github.com/dscottd7/quibble-frontend**
+- **You can access the deployed site here:**
 
 ## Backend Features
 1. **AI-Generated Product Comparison**:
@@ -53,7 +55,7 @@ You can access the site here:
 ## Quibble Architecture
 <img src='./public/Quibble_Architecture.jpg' height = "300"/>
 
-## Tech Stack
+## Backend Tech Stack
 - **Python & FastAPI: Backend API for handling requests, scraping, and OpenAI prompt services.**
 - **Selenium: Web scraping tool to gather product information from URLs using web driver.**
 - **OpenAI API: Used to generate product comparisons based on scraped data.**
@@ -99,6 +101,7 @@ uvicorn app.main:app --reload
 - Database Integration: Store users' saved comparisons in a database instead of local storage to support multiple devices and permanent access.
 - User Feedback and Ratings: Allow users to rate the quality of a generated comparison.
 - Real-time Chatbot Assistant: Integrate a Quibble chatbot to guide users for nevigating the site. 
+- Product Visual Integration: Enhance the comparison feature by scraping product images from relevant websites and displaying them in an organized, visually appealing way.
 
 ## Citations
 - FastAPI Official Documentation. https://fastapi.tiangolo.com/learn/ 

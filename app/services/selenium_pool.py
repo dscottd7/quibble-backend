@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class WebDriverPool:
-    def __init__(self, max_drivers: int = 2):
+    def __init__(self, max_drivers: int = 4):
         self.max_drivers = max_drivers
         self._semaphore = asyncio.Semaphore(max_drivers)
         self._init_lock = asyncio.Lock()
@@ -52,6 +52,11 @@ class WebDriverPool:
         options.add_argument('--no-service-autorun')
         options.add_argument('--password-store=basic')
         options.add_argument('--disable-notifications')
+        options.add_argument('--headless=new')
+        options.add_argument('--disable-blink-features=AutomationControlled')
+        options.add_experimental_option('excludeSwitches', ['enable-automation'])
+        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument('--start-maximized')
         
         # Random viewport
         viewports = [(1920, 1080), (1366, 768), (1536, 864), (1440, 900)]
@@ -74,7 +79,11 @@ class WebDriverPool:
         
         # Set legitimate referrer
         options.add_argument('--referrer=https://www.google.com/')
-        
+
+        # Unique debugging port to prevent conflicts
+        debug_port = random.randint(9222, 9999)
+        options.add_argument(f'--remote-debugging-port={debug_port}')
+
         return options
 
     async def _create_driver_with_retry(self, max_retries: int = 2) -> webdriver.Chrome:

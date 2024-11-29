@@ -1,5 +1,9 @@
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from urllib.parse import urlparse
@@ -11,6 +15,7 @@ import traceback
 from fastapi import HTTPException
 from .selenium_pool import driver_pool
 import undetected_chromedriver as uc
+import time
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def random_sleep():
     """Add random delay to simulate human behavior"""
-    sleep(random.uniform(1, 3))
+    sleep(random.uniform(1, 2))
 
 
 def validate_url(url: str):
@@ -30,113 +35,148 @@ def validate_url(url: str):
 
 
 async def get_with_selenium_async(url: str, task_id: str = None, max_retries: int = 2) -> str:
-    """Fetches page content using Selenium WebDriver - asynchronous is used by websockets approach."""
-
-    # Validate URL
+    """Fetches page content using a dedicated WebDriver instance per request."""
     validate_url(url)
 
     for attempt in range(1, max_retries + 1):
+        driver = None
         try:
-            async with driver_pool.acquire_driver(task_id) as driver:
-                logger.info(f"Fetching URL: {url} (Attempt {attempt})")
-                
-                # Using asyncio.to_thread for potentially blocking Selenium operations
-                def selenium_ops():
-                    try:
-                        # Initial navigation to Google
-                        driver.get('https://www.google.com')
-                        random_sleep()
-                        
-                        # Set cookies to appear more legitimate
-                        driver.execute_cdp_cmd('Network.enable', {})
-                        driver.execute_cdp_cmd('Network.setCookie', {
-                            'domain': urlparse(url).netloc,
-                            'name': 'visitor',
-                            'value': f'visitor_{random.randint(1000000, 9999999)}'
-                        })
-                        
-                        # Navigate to target URL
-                        driver.get(url)
-                        random_sleep()
-                        
-                        # Simulate mouse movement
-                        driver.execute_script("""
-                            var event = new MouseEvent('mousemove', {
-                                'view': window,
-                                'bubbles': true,
-                                'cancelable': true,
-                                'clientX': Math.random() * window.innerWidth,
-                                'clientY': Math.random() * window.innerHeight
-                            });
-                            document.dispatchEvent(event);
-                        """)
-                        
-                        # Natural scrolling behavior
-                        total_height = int(driver.execute_script("return document.body.scrollHeight"))
-                        for i in range(3):
-                            scroll_height = random.randint(100, total_height)
-                            driver.execute_script(f"window.scrollTo(0, {scroll_height});")
-                            random_sleep()
-                        
-                        # Wait for body to be present
-                        WebDriverWait(driver, 10).until(
-                            EC.presence_of_element_located((By.TAG_NAME, "body"))
-                        )
-                        
-                        # Get the content
-                        content = driver.page_source
-                        
-                        # Check for bot detection
-                        if any(phrase in content.lower() for phrase in [
-                            "access to this page has been denied",
-                            "please verify you are a human",
-                            "please enable javascript",
-                            "detected unusual traffic",
-                            "automated access",
-                            "bot detected",
-                            "perimeterx"
-                        ]):
-                            raise HTTPException(status_code=403, detail="Bot detection triggered")
-                        
-                        return content
-                        
-                    except Exception as e:
-                        logger.error(f"Error in selenium_ops: {e}")
-                        raise
+            # Create options for request
+            options = Options()
+            
+            # Assign unique debugging port
+            debug_port = random.randint(9222, 9999)
+            options.add_argument(f'--remote-debugging-port={debug_port}')
+            
+            # Basic options
+            options.add_argument('--window-size=1920,1080')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-gpu')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--disable-infobars')
+            options.add_argument("--disable-blink-features=AutomationControlled")
+            options.add_argument('--disable-extensions')
+            options.add_argument('--no-first-run')
+            options.add_argument('--no-default-browser-check')
+            options.add_argument('--no-service-autorun')
+            options.add_argument('--password-store=basic')
+            options.add_argument('--disable-notifications')
+            options.add_argument('--headless=new')
+            options.add_argument('--disable-blink-features=AutomationControlled')
+            options.add_experimental_option('excludeSwitches', ['enable-automation'])
+            options.add_experimental_option('useAutomationExtension', False)
+            options.add_argument('--start-maximized')
 
-                content = await asyncio.to_thread(selenium_ops)
-                
-                if not content:
-                    raise ValueError("Empty content received from page")
-                
-                logger.info(f"Successfully retrieved content for {url} (length: {len(content)})")
-                return content
+            # Random user agent
+            USER_AGENTS = [
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+            ]
+            options.add_argument(f'user-agent={random.choice(USER_AGENTS)}')
+            
+            # Language and headers
+            LANGUAGES = ["en-US,en;q=0.9", "en-GB,en;q=0.9", "en-CA,en;q=0.9"]
+            options.add_argument(f'--lang={random.choice(LANGUAGES)}')
+            options.add_argument(f'--accept-language={random.choice(LANGUAGES)}')
+            options.add_argument('--accept=text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8')
+            
+            # Set legitimate referrer
+            options.add_argument('--referrer=https://www.google.com/')
+            
+            # Create WebDriver instance
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=options)
+            
+            def selenium_ops():
+                try:
+                    # Set timeouts
+                    driver.set_page_load_timeout(30)
+                    driver.implicitly_wait(10)
+                    
+                    # Visit Google first
+                    driver.get('https://www.google.com')
+                    time.sleep(random.uniform(1, 2))
+                    
+                    # Navigate to target URL
+                    driver.get(url)
+                    
+                    # Wait for page to be interactive
+                    WebDriverWait(driver, 10).until(
+                        lambda d: d.execute_script('return document.readyState') == 'complete'
+                    )
+                    
+                    # Get the initial viewport height and total height
+                    viewport_and_total_height = driver.execute_script("""
+                        return {
+                            viewport: window.innerHeight,
+                            total: Math.max(
+                                document.body.scrollHeight,
+                                document.documentElement.scrollHeight,
+                                document.body.offsetHeight,
+                                document.documentElement.offsetHeight
+                            )
+                        }
+                    """)
+                    
+                    viewport_height = viewport_and_total_height['viewport']
+                    total_height = viewport_and_total_height['total']
+                    
+                    # Perform human-like behavior with safety checks
+                    if total_height > viewport_height:
+                        # Set scroll positions
+                        scroll_positions = [
+                            int(total_height * ratio) 
+                            for ratio in [0.3, 0.6, 0.9]
+                        ]
+                        
+                        for scroll_pos in scroll_positions:
+                            driver.execute_script(f"window.scrollTo(0, {scroll_pos});")
+                            time.sleep(random.uniform(0.5, 1))
+                    
+                    # Scroll back to top
+                    driver.execute_script("window.scrollTo(0, 0);")
+                    time.sleep(0.5)
+                    
+                    # Get the content after human simulation
+                    content = driver.page_source
+                    
+                    if not content:
+                        raise ValueError("Empty content received from page")
+                        
+                    return content
+                    
+                except Exception as e:
+                    logger.error(f"Error in selenium_ops: {e}")
+                    raise
 
-        except TimeoutException as e:
-            logger.warning(f"Timeout while fetching {url}: {e}")
-            if attempt == max_retries:
-                raise HTTPException(status_code=504, detail="Timeout while loading the page")
-
-        except WebDriverException as e:
-            logger.error(f"Selenium WebDriver error: {e}")
-            if attempt == max_retries:
-                raise HTTPException(status_code=500, detail="Error with web driver")
-
-        except HTTPException as e:
-            # Re-raise HTTP exceptions immediately
-            raise e
+            # Execute operations with timeout
+            content = await asyncio.wait_for(
+                asyncio.to_thread(selenium_ops),
+                timeout=45
+            )
+            
+            logger.info(f"Successfully retrieved content for {url} (length: {len(content)})")
+            return content
 
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"Attempt {attempt} failed: {str(e)}")
             if attempt == max_retries:
-                raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
-
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Operation failed: {str(e)}"
+                )
+            await asyncio.sleep(2 ** attempt)
+            
         finally:
-            logger.info(f"Completed attempt {attempt} for {url}")
-            await asyncio.sleep(random.uniform(3, 6))  # Wait between retries
+            # Clean up driver
+            if driver:
+                try:
+                    driver.quit()
+                except Exception as e:
+                    logger.warning(f"Error closing driver: {e}")
 
-    logger.error(f"Failed to retrieve content after {max_retries} attempts")
-    raise HTTPException(status_code=500, detail="Failed to retrieve content after multiple attempts")
+    return None
 
 
 def get_with_selenium(url: str, max_retries: int = 2) -> str:

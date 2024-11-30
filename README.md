@@ -25,7 +25,6 @@ The Quibble backend utilizes Selenium to scrape product information from the spe
 This README provides a comprehensive guide to setting up and understanding the Quibble backend, which is built with FastAPI, Selenium, Websockets and deployed on Google Cloud. 
 This application requires both the frontend and backend services to be running for proper functionality. 
 - **You can access Quibble backend repo here: https://github.com/dscottd7/quibble-frontend**
-- **You can access the deployed site here:**
 
 ## Backend Features
 1. **AI-Generated Product Comparison**:

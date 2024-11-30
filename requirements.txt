@@ -1,4 +1,4 @@
-openai==1.47.0
+openai>=1.0.0,<2.0.0
 fastapi
 requests
 beautifulsoup4==4.12.0
@@ -11,6 +11,6 @@ playwright
 webdriver-manager
 selenium
 chromedriver-binary
-undetected-chromedriver
+undetected-chromedriver # This is not supported by Python 3.12+, if you have a higher version of python, keep the below dependecy
 setuptools>=58.0.0
 pytest

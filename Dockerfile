@@ -1,5 +1,5 @@
 # use python image and install chrome and chromedriver (as opposed to using a pre-built image)
-FROM python:3.11
+FROM python:3.13
 
 # Install prerequisites
 RUN apt-get update && apt-get install -y wget gnupg unzip

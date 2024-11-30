@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from typing import Optional, Dict, List
-from fastapi import WebSocket
+from fastapi import WebSocket, HTTPException
 from app.services.get_with_selenium import get_with_selenium_async
 from app.services.clean_html import clean_html
 from app.services.openai_service import call_openai_api
@@ -13,20 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class ComparisonManager:
+    '''Manages the comparison process with parallel processing'''
     def __init__(self):
         self.active_tasks: Dict[str, List[asyncio.Task]] = {}
         self._closed_websockets: set[str] = set()
         self._cancelled_tasks: set[str] = set()
 
-    async def start_comparison(
-        self,
-        websocket: WebSocket,
-        urls: dict,
-        user_input: dict
-    ) -> None:
+    async def start_comparison(self, websocket: WebSocket, urls: dict, user_input: dict) -> None:
         """Manages the comparison process with parallel processing"""
         task_id = str(id(websocket))
-
         try:
             # Process both URLs concurrently but separately
             url1_task = asyncio.create_task(
@@ -37,7 +32,6 @@ class ComparisonManager:
                 ),
                 name=f"URL1-{urls['url1']}"
             )
-
             url2_task = asyncio.create_task(
                 self.process_single_url(
                     websocket,
@@ -77,7 +71,7 @@ class ComparisonManager:
                 )
 
                 # Make call to OpenAI
-                await self.send_status(websocket, "progress", f"Generating comparison...")
+                await self.send_status(websocket, "progress", "Generating comparison...")
                 comparison = await asyncio.to_thread(call_openai_api, prompt)
                 await self.send_status(websocket, "comparison", None, comparison)
 
@@ -88,7 +82,6 @@ class ComparisonManager:
                     "error",
                     f"Error generating comparison: {str(e)}"
                 )
-
         except Exception as e:
             logger.error(f"Unexpected error in comparison: {str(e)}")
             await self.send_status(
@@ -96,16 +89,11 @@ class ComparisonManager:
                 "error",
                 f"Unexpected error: {str(e)}"
             )
-
         finally:
             self.active_tasks.pop(task_id, None)
 
-    async def start_structured_comparison(
-        self,
-        websocket: WebSocket,
-        urls: dict,
-        user_input: dict
-    ) -> None:
+    async def start_structured_comparison(self, websocket: WebSocket, urls: dict, user_input: dict) -> None:
+        """Manages the structured comparison process with parallel processing"""
         task_id = str(id(websocket))
         try:
             # Process both URLs concurrently but separately
@@ -117,7 +105,6 @@ class ComparisonManager:
                 ),
                 name=f"URL1-{urls['url1']}"
             )
-
             url2_task = asyncio.create_task(
                 self.process_single_url(
                     websocket,
@@ -157,10 +144,27 @@ class ComparisonManager:
 
                 # Make call to OpenAI
                 await self.send_status(websocket, "progress", f"Generating comparison...")
-                comparison = await asyncio.to_thread(call_openai_api_structured, prompt)
+                try:
+                    comparison = await asyncio.to_thread(call_openai_api_structured, prompt)
+                    await self.send_status(websocket, "comparison", None, comparison)
+                except HTTPException as e:
+                    logger.error(f"Error generating comparison: {str(e)}")
+                    await self.send_status(
+                        websocket,
+                        "error",
+                        f"Error generating comparison: {str(e.detail)}"
+                    )
+                except Exception as e:
+                    logger.error(f"Unexpected error in comparison: {str(e)}")
+                    await self.send_status(
+                        websocket,
+                        "error",
+                        f"Unexpected error: {str(e)}"
+                    )
                 if isinstance(comparison, ProductComparison):
                     comparison_data = comparison.dict()
-                else: comparison_data = None
+                else:
+                    comparison_data = None
                 await self.send_status(websocket, "comparison", None, comparison_data)
 
             except Exception as e:
@@ -182,13 +186,7 @@ class ComparisonManager:
         finally:
             self.active_tasks.pop(task_id, None)
 
-
-    async def process_single_url(
-        self,
-        websocket: WebSocket,
-        url: str,
-        url_number: int,
-    ) -> Optional[str]:
+    async def process_single_url(self, websocket: WebSocket, url: str, url_number: int,) -> Optional[str]:
         """Process a single URL and return its content"""
         task_id = str(id(websocket))
         logger.info(f"Processing URL {url_number}: {url}")
@@ -221,13 +219,7 @@ class ComparisonManager:
             )
             return None
 
-    async def send_status(
-        self,
-        websocket: WebSocket,
-        status: str,
-        message: Optional[str] = None,
-        data: Optional[str] = None
-    ) -> bool:
+    async def send_status(self, websocket: WebSocket, status: str, message: Optional[str] = None, data: Optional[str] = None) -> bool:
         """Helper method to send consistent status messages to frontend"""
         try:
             msg = {

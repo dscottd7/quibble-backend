@@ -65,19 +65,14 @@ This application requires both the frontend and backend services to be running f
 - **Google Cloud Platform: The application is deployed into Google Cloud though Docker Image**
 
 ## Available Scripts
-1. Current version of Quibble is using `undetected_chromedriver` which is not supported by Python 3.12+. Your installation for python can be: 
+1. Ensure you are using Python 3.12 or later. If you are using Python 3.11 or earlier, the "setuptools" requirement may not function correctly. 
+2. Create and activate a virtual environment:
 ```
-brew install python@3.11                    # Mac
-winget install -e --id Python.Python.3.11   # Windows
-```
-Or, you can add "setuptools>=58.0.0" along with "undetected-chromedriver" in requirements.txt if you have a higher version of Python
-2. Create and activate a virtual environment: 
-```
-python3.11 -m venv .venv   # Mac
-py -3.11 -m venv .venv     # Windows
+python3 -m venv .venv       # Mac/Linux
+python -m venv .venv        # Windows
 
-source .venv/bin/activate  # Mac/Linux
-.\venv\Scripts\activate    # Windows
+source .venv/bin/activate   # Mac/Linux
+.\venv\Scripts\activate     # Windows
 ```
 3. Install required dependencies:
 ```

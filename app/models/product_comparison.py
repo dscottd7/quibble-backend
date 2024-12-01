@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class ProductComparison(BaseModel):
     brief_comparison_title: str
     product1: str

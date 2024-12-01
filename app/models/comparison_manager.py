@@ -4,7 +4,6 @@ from typing import Optional, Dict, List
 from fastapi import WebSocket, HTTPException
 from app.services.get_with_selenium import get_with_selenium_async
 from app.services.clean_html import clean_html
-# from app.services.openai_service import call_openai_api
 from app.services.structured_openai_service import call_openai_api_structured
 from app.models.product_comparison import ProductComparison
 from app.services.prompt_service import create_prompt
@@ -18,79 +17,6 @@ class ComparisonManager:
         self.active_tasks: Dict[str, List[asyncio.Task]] = {}
         self._closed_websockets: set[str] = set()
         self._cancelled_tasks: set[str] = set()
-
-    # async def start_comparison(self, websocket: WebSocket, urls: dict, user_input: dict) -> None:
-    #     """Manages the comparison process with parallel processing"""
-    #     task_id = str(id(websocket))
-    #     try:
-    #         # Process both URLs concurrently but separately
-    #         url1_task = asyncio.create_task(
-    #             self.process_single_url(
-    #                 websocket,
-    #                 urls['url1'],
-    #                 1
-    #             ),
-    #             name=f"URL1-{urls['url1']}"
-    #         )
-    #         url2_task = asyncio.create_task(
-    #             self.process_single_url(
-    #                 websocket,
-    #                 urls['url2'],
-    #                 2
-    #             ),
-    #             name=f"URL2-{urls['url2']}"
-    #         )
-
-    #         self.active_tasks[task_id] = [url1_task, url2_task]
-
-    #         # Wait for both URLs to be processed
-    #         results = await asyncio.gather(url1_task, url2_task, return_exceptions=True)
-
-    #         # Check for successful processing
-    #         if any(isinstance(r, Exception) for r in results):
-    #             error = next(r for r in results if isinstance(r, Exception))
-    #             await self.send_status(
-    #                 websocket,
-    #                 "error",
-    #                 f"Error processing URLs: {str(error)}"
-    #             )
-    #             return
-
-    #         # Generate comparison
-    #         try:
-    #             logger.info("Generating comparison...")
-    #             logger.info(f"Content 1 length: {len(results[0]) if results[0] else 0}")
-    #             logger.info(f"Content 2 length: {len(results[1]) if results[1] else 0}")
-
-    #             # Create a prompt for comparison
-    #             prompt = create_prompt(
-    #                 results[0],
-    #                 results[1],
-    #                 user_input['selected_categories'],
-    #                 user_input['user_preference']
-    #             )
-
-    #             # Make call to OpenAI
-    #             await self.send_status(websocket, "progress", "Generating comparison...")
-    #             comparison = await asyncio.to_thread(call_openai_api, prompt)
-    #             await self.send_status(websocket, "comparison", None, comparison)
-
-    #         except Exception as e:
-    #             logger.error(f"Error generating comparison: {str(e)}")
-    #             await self.send_status(
-    #                 websocket,
-    #                 "error",
-    #                 f"Error generating comparison: {str(e)}"
-    #             )
-    #     except Exception as e:
-    #         logger.error(f"Unexpected error in comparison: {str(e)}")
-    #         await self.send_status(
-    #             websocket,
-    #             "error",
-    #             f"Unexpected error: {str(e)}"
-    #         )
-    #     finally:
-    #         self.active_tasks.pop(task_id, None)
 
     async def start_structured_comparison(self, websocket: WebSocket, urls: dict, user_input: dict) -> None:
         """Manages the structured comparison process with parallel processing"""

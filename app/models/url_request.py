@@ -1,6 +1,6 @@
-from pydantic import BaseModel, HttpUrl
+# from pydantic import BaseModel, HttpUrl
 
 
-class URLRequest(BaseModel):
-    url1: HttpUrl
-    url2: HttpUrl
+# class URLRequest(BaseModel):
+#     url1: HttpUrl
+#     url2: HttpUrl

@@ -1,10 +1,10 @@
 from openai import OpenAI
-from pydantic import BaseModel
+# from pydantic import BaseModel
 from dotenv import load_dotenv
 from fastapi import HTTPException
 import os
 import logging
-import openai
+# import openai
 from app.models.product_comparison import ProductComparison
 
 logger = logging.getLogger(__name__)

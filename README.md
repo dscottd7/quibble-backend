@@ -65,7 +65,11 @@ This application requires both the frontend and backend services to be running f
 
 ## Available Scripts
 1. Ensure you are using Python 3.12 or later. If you are using Python 3.11 or earlier, the "setuptools" requirement may not function correctly. 
-2. Create and activate a virtual environment:
+2. You will need to create and provide an OpenAI API key to run this application locally.  After creating an OpenAI API key (https://platform.openai.com/docs/api-reference/authentication), make your key accessible by listing inside an `.env` file in your project directory as such:
+```
+OPENAI_API_KEY=<your-api-key>
+```
+3. Create and activate a virtual environment:
 ```
 python3 -m venv .venv       # Mac/Linux
 python -m venv .venv        # Windows
@@ -73,15 +77,15 @@ python -m venv .venv        # Windows
 source .venv/bin/activate   # Mac/Linux
 .\venv\Scripts\activate     # Windows
 ```
-3. Install required dependencies:
+4. Install required dependencies:
 ```
 pip install -r requirements.txt
 ```
-4. Run the application:
+5. Run the application:
 ```
 uvicorn app.main:app --reload
 ```
-5. Access Swagger for testing:
+6. Access Swagger for testing:
 - Navigate to `http://127.0.0.1:8000/docs` in your browser to access the Swagger UI and test API routes (websockets will not appear there).
 
 ## Backend Walkthrough

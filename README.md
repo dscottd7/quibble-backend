@@ -65,7 +65,11 @@ This application requires both the frontend and backend services to be running f
 
 ## Available Scripts
 1. Ensure you are using Python 3.12 or later. If you are using Python 3.11 or earlier, the "setuptools" requirement may not function correctly. 
-2. Create and activate a virtual environment:
+2. You will need to create and provide an OpenAI API key to run this application locally.  After creating an OpenAI API key (https://platform.openai.com/docs/api-reference/authentication), make your key accessible by listing inside an `.env` file in your project directory as such:
+```
+OPENAI_API_KEY=<your-api-key>
+```
+3. Create and activate a virtual environment:
 ```
 python3 -m venv .venv       # Mac/Linux
 python -m venv .venv        # Windows
@@ -73,15 +77,15 @@ python -m venv .venv        # Windows
 source .venv/bin/activate   # Mac/Linux
 .\venv\Scripts\activate     # Windows
 ```
-3. Install required dependencies:
+4. Install required dependencies:
 ```
 pip install -r requirements.txt
 ```
-4. Run the application:
+5. Run the application:
 ```
 uvicorn app.main:app --reload
 ```
-5. Access Swagger for testing:
+6. Access Swagger for testing:
 - Navigate to `http://127.0.0.1:8000/docs` in your browser to access the Swagger UI and test API routes (websockets will not appear there).
 
 ## Backend Walkthrough
@@ -94,7 +98,7 @@ uvicorn app.main:app --reload
 - Multiple Product Comparison: Extend functionality to allow comparison of more than two products at once.
 - Database Integration: Store users' saved comparisons in a database instead of local storage to support multiple devices and permanent access.
 - User Feedback and Ratings: Allow users to rate the quality of a generated comparison.
-- Real-time Chatbot Assistant: Integrate a Quibble chatbot to guide users for nevigating the site. 
+- Real-time Chatbot Assistant: Integrate a Quibble chatbot to guide users for navigating the site. 
 - Product Visual Integration: Enhance the comparison feature by scraping product images from relevant websites and displaying them in an organized, visually appealing way.
 
 ## Citations

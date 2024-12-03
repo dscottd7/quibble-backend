@@ -98,7 +98,7 @@ uvicorn app.main:app --reload
 - Multiple Product Comparison: Extend functionality to allow comparison of more than two products at once.
 - Database Integration: Store users' saved comparisons in a database instead of local storage to support multiple devices and permanent access.
 - User Feedback and Ratings: Allow users to rate the quality of a generated comparison.
-- Real-time Chatbot Assistant: Integrate a Quibble chatbot to guide users for nevigating the site. 
+- Real-time Chatbot Assistant: Integrate a Quibble chatbot to guide users for navigating the site. 
 - Product Visual Integration: Enhance the comparison feature by scraping product images from relevant websites and displaying them in an organized, visually appealing way.
 
 ## Citations

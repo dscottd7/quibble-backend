@@ -20,7 +20,7 @@
 ## Project Overview
 Quibble is an AI-powered product comparison tool designed to streamline the process of comparing two products. Users can enter URLs for products they wish to compare, along with their preferences for various comparison factors. The backend handles web scraping, data extraction, and OpenAI processing to produce an insightful, structured comparison.
 
-The Quibble backend utilizes Selenium to scrape product information from the specified web pages and uses OpenAI to generate detailed comparison reports, highlighting key features, pros, cons, and essential factors. Then, the backend communicates with the frontend through WebSockets, ensuring a real-time, responsive user experience. Quibble frontend then presents this comparison report to assist the user making well-informed purchasing decisions.
+The Quibble backend utilizes Selenium to scrape product information from the specified web pages and uses OpenAI to generate detailed comparison reports, highlighting key features, pros, cons, and essential factors. Then, the backend communicates with the frontend through WebSockets, ensuring a real-time, responsive user experience. Quibble frontend then presents this comparison report to assist the user in making well-informed purchasing decisions.
 
 This README provides a comprehensive guide to setting up and understanding the Quibble backend, which is built with FastAPI, Selenium, Websockets and deployed on Google Cloud. 
 This application requires both the frontend and backend services to be running for proper functionality. 
@@ -60,8 +60,8 @@ This application requires both the frontend and backend services to be running f
 - **OpenAI API: Used to generate product comparisons based on scraped data.**
 - **WebSockets: Real-time communication between the backend and frontend.**
 - **Swagger Hub: Adopted to test API endpoints and CRUD operations, including scraping and OpenAI services.**
-- **Py test: Implemented to test API endpoints and backend functions** 
-- **Google Cloud Platform: The application is deployed into Google Cloud though Docker Image**
+- **Pytest: Implemented to test API endpoints and backend functions** 
+- **Google Cloud Platform: The application is deployed into Google Cloud as a Docker Image**
 
 ## Available Scripts
 1. Ensure you are using Python 3.12 or later. If you are using Python 3.11 or earlier, the "setuptools" requirement may not function correctly. 
